@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نتیجه تحلیل روغن ترانسفورماتور</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="results-body">
+  <main class="page results-page">
+    <header class="app-header app-header-results">
+      <button class="icon-button export-button" type="button" aria-label="خروجی گرفتن">
+        <i class="uil uil-share-alt"></i>
+      </button>
+      <h1>نتیجه تحلیل</h1>
+      <a class="icon-button back-button" href="index.html" aria-label="بازگشت به فرم">
+        <span>‹</span>
+      </a>
+    </header>
+
+    <section class="results-stack">
+      <div id="summary" class="summary"></div>
+      <section class="panel methods-panel">
+        <div class="section-heading">
+          <h2>خلاصه روش‌ها</h2>
+          <a href="guide.html" class="guide-link">راهنما</a>
+        </div>
+        <div id="methodResults" class="cards"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="bottom-cta">
+    <a href="tel:+989126125786" class="button-link call-button"><i class="uil uil-phone"></i> مشاوره تخصصی</a>
+  </footer>
+
+  <script src="diagnosisEngine.js"></script>
+  <script src="faultDefinitions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
