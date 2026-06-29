@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>اپ تحلیل تست روغن ترانسفورماتور</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="background-orb orb-a"></div>
+  <div class="background-orb orb-b"></div>
+  <div class="background-grid"></div>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-copy reveal">
+        <p class="eyebrow">سامانه هوشمند DGA / POTG</p>
+        <h1>تحلیل تست روغن ترانسفورماتور</h1>
+        <p class="subtitle">یک رابط فارسی، روان و پرتحرک برای ورود مقادیر گازها، محاسبه نسبت‌های کلیدی، مقایسه با ۲۰ نمونه مرجع و ارائه تشخیص احتمالی.</p>
+        <div class="hero-actions">
+          <button id="analyzeBtn" class="primary">تحلیل کن</button>
+          <button id="validateBtn" class="ghost">اعتبارسنجی ۲۰ نمونه</button>
+        </div>
+      </div>
+      <div class="status-card reveal reveal-delay-1">
+        <span>نسخه</span>
+        <strong>نسخه ۳</strong>
+        <small>طراحی بازطراحی‌شده با تمرکز بر RTL و تجربه تعاملی</small>
+      </div>
+      <div class="hero-metrics reveal reveal-delay-2">
+        <div class="metric-card">
+          <span>نمونه مرجع</span>
+          <strong id="sampleCountBadge">۲۰</strong>
+        </div>
+        <div class="metric-card">
+          <span>روش تشخیص</span>
+          <strong>۶</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="panel glass reveal reveal-delay-1">
+        <h2>نمونه‌های پایان‌نامه</h2>
+        <p class="muted">یک نمونه را انتخاب کن تا مقادیرش در فرم بنشیند.</p>
+        <select id="sampleSelect"></select>
+        <button id="loadSampleBtn" class="secondary">بارگذاری نمونه</button>
+        <div class="inline-stat">
+          <span>چیدمان رابط</span>
+          <strong>راست‌به‌چپ کامل</strong>
+        </div>
+      </aside>
+
+      <section class="panel reveal">
+        <h2>ورود داده تست روغن</h2>
+        <div class="grid-form">
+          <label>H2<input id="H2" type="text" inputmode="numeric" value="۳۰۷" /></label>
+          <label>CH4<input id="CH4" type="text" inputmode="numeric" value="۶۵۳" /></label>
+          <label>C2H2<input id="C2H2" type="text" inputmode="numeric" value="۸" /></label>
+          <label>C2H4<input id="C2H4" type="text" inputmode="numeric" value="۱۰۶۵" /></label>
+          <label>C2H6<input id="C2H6" type="text" inputmode="numeric" value="۱۸۰" /></label>
+          <label>CO<input id="CO" type="text" inputmode="numeric" value="۱۵۵۷" /></label>
+          <label>CO2<input id="CO2" type="text" inputmode="numeric" value="۱۰۷۲۳" /></label>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel results reveal reveal-delay-2">
+      <h2>نتیجه تحلیل</h2>
+      <div id="summary" class="summary"></div>
+      <div id="methodResults" class="cards"></div>
+    </section>
+
+    <section class="panel reveal">
+      <h2>تست تطبیق با ۲۰ نمونه پایان‌نامه</h2>
+      <p class="muted">این بخش نشان می‌دهد خروجی ساده فعلی چقدر با نتیجه مرجع POTG در پایان‌نامه هم‌خوان است.</p>
+      <div id="validationSummary" class="validation-summary"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>نمونه</th>
+              <th>POTG مرجع</th>
+              <th>POTG اپ</th>
+              <th>وضعیت</th>
+            </tr>
+          </thead>
+          <tbody id="validationTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="diagnosisEngine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
