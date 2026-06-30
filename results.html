@@ -28,7 +28,6 @@
       <section class="panel methods-panel">
         <div class="section-heading">
           <h2>خلاصه روش‌ها</h2>
-          <a href="guide.html" class="guide-link">راهنما</a>
         </div>
         <div id="methodResults" class="cards"></div>
       </section>
@@ -38,6 +37,16 @@
   <footer class="bottom-cta">
     <a href="tel:+989126125786" class="button-link call-button"><i class="uil uil-phone"></i> مشاوره تخصصی</a>
   </footer>
+
+  <div id="infoSheet" class="sheet-shell" aria-hidden="true">
+    <button id="sheetBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div id="sheetHandle" class="sheet-handle-wrap">
+        <span class="sheet-handle"></span>
+      </div>
+      <div id="sheetContent" class="sheet-content"></div>
+    </section>
+  </div>
 
   <script src="diagnosisEngine.js"></script>
   <script src="faultDefinitions.js"></script>
