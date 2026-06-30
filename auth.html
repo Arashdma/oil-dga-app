@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ورود و ساخت حساب</title>
+  <title>ورود و ثبت نام</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -13,18 +13,15 @@
 </head>
 <body>
   <main class="page auth-page">
-    <header class="app-header app-header-form">
-      <a class="brand" href="index.html" aria-label="آسان تدبیر نیرو">
-        <img src="assets/logo.png" alt="لوگوی آسان تدبیر نیرو" />
-        <strong>تحلیل روغن ترانس</strong>
-      </a>
+    <header class="app-header app-header-results">
+      <h1>ورود/ثبت نام</h1>
     </header>
 
     <section class="hero auth-hero">
-      <div class="hero-copy">
-        <span class="eyebrow">حساب کاربری</span>
-        <h1>ورود با شماره موبایل</h1>
-        <p class="subtitle">یک بار حساب بساز و از این به بعد تمام تست‌ها زیر همان حساب ذخیره می‌شوند.</p>
+      <div class="hero-copy auth-hero-copy">
+        <img class="auth-hero-logo" src="assets/logo.png" alt="لوگوی آسان تدبیر نیرو" />
+        <h1>اپلیکیشن تحلیل روغن ترانسفورماتور</h1>
+        <p class="auth-hero-powered">قدرت گرفته از آسان تدبیر نیرو</p>
       </div>
     </section>
 
@@ -33,7 +30,7 @@
     <section class="panel auth-shell">
       <div class="auth-tab-row">
         <button class="auth-tab is-active" type="button" data-auth-tab="login">ورود</button>
-        <button class="auth-tab" type="button" data-auth-tab="register">ساخت حساب</button>
+        <button class="auth-tab" type="button" data-auth-tab="register">ثبت نام</button>
       </div>
 
       <section data-auth-panel="login" class="auth-panel">
@@ -44,7 +41,12 @@
           </label>
           <label class="field">
             <span>رمز عبور</span>
-            <span class="input-wrap"><input name="password" type="password" placeholder="رمز عبور" required /></span>
+            <span class="input-wrap input-wrap-password">
+              <input name="password" type="password" placeholder="۸ تا ۳۰ کاراکتر" minlength="8" maxlength="30" pattern="[A-Za-z0-9]{8,30}" inputmode="latin" autocapitalize="off" autocomplete="current-password" data-password-input required />
+              <button class="password-toggle" type="button" data-password-toggle aria-label="نمایش رمز عبور" aria-pressed="false">
+                <i class="uil uil-eye"></i>
+              </button>
+            </span>
           </label>
           <button class="primary form-submit" type="submit"><i class="uil uil-signin"></i> ورود به حساب</button>
         </form>
@@ -70,16 +72,26 @@
               <span>شماره موبایل</span>
               <span class="input-wrap"><input name="mobile" type="tel" inputmode="numeric" placeholder="۰۹۱۲..." required /></span>
             </label>
-            <label class="field">
+            <label class="field field-wide">
               <span>رمز عبور</span>
-              <span class="input-wrap"><input name="password" type="password" placeholder="حداقل ۶ کاراکتر" required /></span>
+              <span class="input-wrap input-wrap-password">
+                <input name="password" type="password" placeholder="فقط حروف و عدد انگلیسی" minlength="8" maxlength="30" pattern="[A-Za-z0-9]{8,30}" inputmode="latin" autocapitalize="off" autocomplete="new-password" data-password-input required />
+                <button class="password-toggle" type="button" data-password-toggle aria-label="نمایش رمز عبور" aria-pressed="false">
+                  <i class="uil uil-eye"></i>
+                </button>
+              </span>
             </label>
-            <label class="field">
+            <label class="field field-wide">
               <span>تکرار رمز</span>
-              <span class="input-wrap"><input name="confirmPassword" type="password" placeholder="تکرار رمز" required /></span>
+              <span class="input-wrap input-wrap-password">
+                <input name="confirmPassword" type="password" placeholder="تکرار همان رمز" minlength="8" maxlength="30" pattern="[A-Za-z0-9]{8,30}" inputmode="latin" autocapitalize="off" autocomplete="new-password" data-password-input required />
+                <button class="password-toggle" type="button" data-password-toggle aria-label="نمایش رمز عبور" aria-pressed="false">
+                  <i class="uil uil-eye"></i>
+                </button>
+              </span>
             </label>
           </div>
-          <button class="primary form-submit" type="submit"><i class="uil uil-user-plus"></i> ساخت حساب</button>
+          <button class="primary form-submit" type="submit"><i class="uil uil-user-plus"></i> ثبت نام</button>
         </form>
         <div id="registerMessage" class="auth-message" hidden></div>
       </section>

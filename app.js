@@ -19,6 +19,13 @@ const methodLabels = {
 const methodOrder = ["ROGERS", "IEC", "POTG", "DUVAL", "DORENBERG", "IEEE"];
 let currentAnalysisResult = null;
 let infoSheetState = null;
+const HISTORY_PAGE_SIZE = 5;
+const historyState = {
+  items: [],
+  loading: false,
+  hasMore: true,
+  observer: null
+};
 
 const methodInfoLibrary = {
   IEEE: {
@@ -424,20 +431,16 @@ function renderMethods(result) {
     ${methodsHtml}
     <div class="method-extra">
       ${renderConsensus(consensus)}
-      <div class="recommendation-card">
-        <h2><i class="uil uil-wrench"></i> اقدام پیشنهادی</h2>
-        <div class="action-chips">${createActionChips(result.recommendation)}</div>
-      </div>
     </div>
   `;
 }
 
 function renderSaveStatus(message, tone = "neutral") {
-  const box = $("saveStatus");
-  if (!box) return;
-  box.hidden = false;
-  box.className = `save-status save-status-${tone}`;
-  box.textContent = message;
+  if (!message) return;
+  if (window.AppAuth?.showToast) {
+    window.AppAuth.showToast(message, tone);
+    return;
+  }
 }
 
 async function savePendingAnalysisIfNeeded() {
@@ -517,50 +520,49 @@ function initResultsPage() {
     }
     window.location.href = "index.html";
   });
-  const exportButton = document.querySelector(".export-button");
-  if (exportButton) {
-    exportButton.addEventListener("click", () => {
-      if (navigator.share) {
-        navigator.share({ title: document.title, url: window.location.href }).catch(() => {});
-        return;
-      }
-      window.print();
-    });
-  }
 }
 
-function renderHistoryList(items) {
+function buildHistoryCard(item) {
+  const result = item.result || {};
+  const definition = getFaultDefinition(item.final_diagnosis || result.finalDiagnosis);
+  const gases = result.input || item.input || {};
+  const gasSummary = fields
+    .map(key => `<span class="history-chip">${escapeHtml(key)}: ${escapeHtml(formatNumber(gases[key] ?? 0))}</span>`)
+    .join("");
+
+  return `
+    <article class="history-card panel" role="button" tabindex="0" data-history-result='${escapeHtml(JSON.stringify(result))}'>
+      <div class="history-card-top">
+        ${renderSeverityBadge(definition)}
+        <span class="history-date">${escapeHtml(formatDateTime(item.created_at))}</span>
+      </div>
+      <strong class="history-title">${escapeHtml(definition.title)}</strong>
+      <p class="history-subtitle">اعتماد ${escapeHtml(item.confidence || result.confidence || "نامشخص")} | TDCG: ${escapeHtml(formatNumber(item.tdcg ?? result.tdcg ?? 0))}</p>
+      <div class="history-chip-row">${gasSummary}</div>
+    </article>
+  `;
+}
+
+function renderHistoryList(items, { append = false } = {}) {
   const container = $("historyList");
   const empty = $("historyEmpty");
   if (!container || !empty) return;
 
   if (!items.length) {
-    empty.hidden = false;
-    container.innerHTML = "";
+    if (!append) {
+      empty.hidden = false;
+      container.innerHTML = "";
+    }
     return;
   }
 
   empty.hidden = true;
-  container.innerHTML = items.map(item => {
-    const result = item.result || {};
-    const definition = getFaultDefinition(item.final_diagnosis || result.finalDiagnosis);
-    const gases = result.input || item.input || {};
-    const gasSummary = fields
-      .map(key => `<span class="history-chip">${escapeHtml(key)}: ${escapeHtml(formatNumber(gases[key] ?? 0))}</span>`)
-      .join("");
-
-    return `
-      <article class="history-card panel" role="button" tabindex="0" data-history-result='${escapeHtml(JSON.stringify(result))}'>
-        <div class="history-card-top">
-          ${renderSeverityBadge(definition)}
-          <span class="history-date">${escapeHtml(formatDateTime(item.created_at))}</span>
-        </div>
-        <strong class="history-title">${escapeHtml(definition.title)}</strong>
-        <p class="history-subtitle">اعتماد ${escapeHtml(item.confidence || result.confidence || "نامشخص")} | TDCG: ${escapeHtml(formatNumber(item.tdcg ?? result.tdcg ?? 0))}</p>
-        <div class="history-chip-row">${gasSummary}</div>
-      </article>
-    `;
-  }).join("");
+  const html = items.map(buildHistoryCard).join("");
+  if (append) {
+    container.insertAdjacentHTML("beforeend", html);
+    return;
+  }
+  container.innerHTML = html;
 }
 
 function openHistoryResult(serializedResult) {
@@ -579,14 +581,27 @@ function openHistoryResult(serializedResult) {
 
 async function initHistoryPage() {
   const container = $("historyList");
-  if (!container) return;
-  container.innerHTML = `<div class="panel history-loading">در حال بارگذاری سوابق شما...</div>`;
-  const { data, error } = await window.AppAuth.listAnalyses();
-  if (error) {
-    container.innerHTML = `<div class="panel history-loading history-error">${escapeHtml(error)}</div>`;
-    return;
-  }
-  renderHistoryList(data || []);
+  const loadMore = $("historyLoadMore");
+  const loadMoreText = $("historyLoadMoreText");
+  if (!container || !loadMore || !loadMoreText) return;
+  historyState.items = [];
+  historyState.loading = false;
+  historyState.hasMore = true;
+  loadMore.hidden = false;
+  loadMoreText.hidden = true;
+  container.innerHTML = `
+    <div class="panel history-loading history-loading-panel">
+      <div class="history-loading-more">
+        <span>در حال بارگذاری سوابق شما</span>
+        <span class="loading-dots" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </div>
+    </div>
+  `;
+
   container.addEventListener("click", event => {
     const card = event.target.closest("[data-history-result]");
     if (!card) return;
@@ -599,6 +614,46 @@ async function initHistoryPage() {
     event.preventDefault();
     openHistoryResult(card.dataset.historyResult);
   });
+
+  async function loadNextPage() {
+    if (historyState.loading || !historyState.hasMore) return;
+    historyState.loading = true;
+    const isFirstPage = historyState.items.length === 0;
+    loadMore.hidden = false;
+    loadMoreText.hidden = isFirstPage;
+    const { data, error } = await window.AppAuth.listAnalyses({
+      limit: HISTORY_PAGE_SIZE + 1,
+      offset: historyState.items.length
+    });
+    historyState.loading = false;
+    loadMoreText.hidden = true;
+    if (error) {
+      container.innerHTML = `<div class="panel history-loading history-error">${escapeHtml(error)}</div>`;
+      historyState.hasMore = false;
+      return;
+    }
+
+    const fetchedItems = data || [];
+    const nextItems = fetchedItems.slice(0, HISTORY_PAGE_SIZE);
+    if (isFirstPage) container.innerHTML = "";
+    renderHistoryList(nextItems, { append: !isFirstPage });
+    historyState.items.push(...nextItems);
+    historyState.hasMore = fetchedItems.length > HISTORY_PAGE_SIZE;
+    loadMore.hidden = !historyState.hasMore;
+    if (!historyState.hasMore && !historyState.items.length) {
+      renderHistoryList([], { append: false });
+    }
+  }
+
+  historyState.observer?.disconnect?.();
+  historyState.observer = new IntersectionObserver(entries => {
+    if (entries.some(entry => entry.isIntersecting)) {
+      loadNextPage();
+    }
+  }, { rootMargin: "120px 0px" });
+  historyState.observer.observe(loadMore);
+
+  await loadNextPage();
 }
 
 function openInfoSheet(methodKey) {

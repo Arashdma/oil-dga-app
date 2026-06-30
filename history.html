@@ -23,22 +23,21 @@
 
     <section class="results-stack">
       <section class="panel account-summary profile-summary">
-        <div>
-          <span class="account-kicker">پروفایل شما</span>
-          <strong class="account-name" data-user-name></strong>
-          <p class="account-meta"><span data-user-mobile></span> | <span data-company-name></span></p>
+        <div class="profile-avatar">
+          <i class="uil uil-user-circle"></i>
         </div>
-      </section>
-
-      <section class="panel profile-links">
-        <a href="guide.html" class="profile-link-row">
-          <span class="profile-link-icon"><i class="uil uil-book-open"></i></span>
-          <span class="profile-link-copy">
-            <strong>راهنما</strong>
-            <small>روش تحلیل و درباره اپلیکیشن را ببین</small>
-          </span>
-          <i class="uil uil-angle-left-b"></i>
-        </a>
+        <span class="account-kicker">پروفایل شما</span>
+        <strong class="account-name" data-user-name></strong>
+        <div class="profile-meta-grid">
+          <p class="account-meta profile-meta-item">
+            <i class="uil uil-mobile-android"></i>
+            <span data-user-mobile></span>
+          </p>
+          <p class="account-meta profile-meta-item">
+            <i class="uil uil-building"></i>
+            <span data-company-name></span>
+          </p>
+        </div>
       </section>
 
       <div data-global-message hidden></div>
@@ -54,6 +53,21 @@
       </section>
 
       <section id="historyList" class="history-stack"></section>
+      <div id="historyLoadMore" class="history-load-more" aria-hidden="true">
+        <div id="historyLoadMoreText" class="history-loading history-loading-more" hidden>
+          <span>در حال بارگذاری سوابق بیشتر</span>
+          <span class="loading-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </div>
+      </div>
+
+      <section class="profile-footnote" aria-label="سازنده و مالک اثر">
+        <p><i class="uil uil-user-square"></i> طراحی و مالکیت اثر: مهندس عباس دامن‌افشان، شرکت آسان تدبیر نیرو</p>
+        <p class="guide-made">نسخه ۱.۱.۰</p>
+      </section>
     </section>
   </main>
 
@@ -61,6 +75,10 @@
     <a href="index.html" class="bottom-nav-item">
       <i class="uil uil-estate"></i>
       <span>خانه</span>
+    </a>
+    <a href="guide.html" class="bottom-nav-item">
+      <i class="uil uil-book-open"></i>
+      <span>راهنما</span>
     </a>
     <a href="history.html" class="bottom-nav-item is-active" aria-current="page">
       <i class="uil uil-user"></i>

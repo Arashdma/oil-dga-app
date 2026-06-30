@@ -12,15 +12,9 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="page guide-page">
+  <main class="page guide-page has-app-nav">
     <header class="app-header app-header-results">
-      <a class="icon-button export-button" href="history.html" aria-label="سوابق">
-        <i class="uil uil-history"></i>
-      </a>
       <h1>راهنمای تحلیل</h1>
-      <a class="icon-button back-button" href="index.html" aria-label="بازگشت">
-        <span>‹</span>
-      </a>
     </header>
 
     <section class="guide-hero">
@@ -52,13 +46,23 @@
         <p>متن‌ها و توضیح‌های آموزشی اپ بر پایه پایان‌نامه «ارائه روشی برای آنالیز گازهای محلول در روغن و صحت‌سنجی آن به منظور عیب‌یابی ترانسفورماتورهای قدرت» بومی‌سازی شده‌اند.</p>
       </article>
 
-      <article class="panel guide-card guide-signoff">
-        <h2><i class="uil uil-user-square"></i> سازنده و مالک اثر</h2>
-        <p>این اپلیکیشن توسط مهندس عباس دامن‌افشان با برند آسان تدبیر نیرو طراحی شده است. منطق محصول، محتوای علمی و ساختار تحلیلی این نرم‌افزار متعلق به ایشان است.</p>
-        <p class="guide-made">نسخه ۱.۱.۰</p>
-      </article>
     </section>
   </main>
+
+  <nav class="bottom-nav" aria-label="ناوبری اصلی">
+    <a href="index.html" class="bottom-nav-item">
+      <i class="uil uil-estate"></i>
+      <span>خانه</span>
+    </a>
+    <a href="guide.html" class="bottom-nav-item is-active" aria-current="page">
+      <i class="uil uil-book-open"></i>
+      <span>راهنما</span>
+    </a>
+    <a href="history.html" class="bottom-nav-item">
+      <i class="uil uil-user"></i>
+      <span>پروفایل</span>
+    </a>
+  </nav>
 
   <script src="supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
