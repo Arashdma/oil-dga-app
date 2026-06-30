@@ -3,6 +3,8 @@ function $(id) { return document.getElementById(id); }
 const fields = ["H2", "CH4", "C2H2", "C2H4", "C2H6", "CO", "CO2"];
 const STORAGE_KEY = "oilDgaLastInput";
 const PENDING_ANALYSIS_KEY = "oilDgaPendingAnalysis";
+const STORED_RESULT_KEY = "oilDgaLastResult";
+const HISTORY_RESULT_KEY = "oilDgaHistoryResult";
 const pathName = window.location.pathname;
 const isResultsPage = pathName.endsWith("/results.html") || pathName.endsWith("results.html");
 const isHistoryPage = pathName.endsWith("/history.html") || pathName.endsWith("history.html");
@@ -363,6 +365,20 @@ function persistCurrentInput(gases = getFormGases()) {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(gases));
 }
 
+function persistAnalysisResult(key, result) {
+  sessionStorage.setItem(key, JSON.stringify(result));
+}
+
+function getStoredAnalysisResult(key) {
+  const raw = sessionStorage.getItem(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 function getStoredInput() {
   const raw = sessionStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
@@ -447,13 +463,20 @@ async function savePendingAnalysisIfNeeded() {
 }
 
 function renderStoredAnalysis() {
+  const historyResult = getStoredAnalysisResult(HISTORY_RESULT_KEY);
+  const storedResult = getStoredAnalysisResult(STORED_RESULT_KEY);
   const storedInput = getStoredInput();
-  if (!storedInput) {
+  const result = historyResult || storedResult || (storedInput ? analyzeDGA(storedInput) : null);
+
+  if (!result) {
     window.location.href = "index.html";
     return;
   }
-  const result = analyzeDGA(storedInput);
+
   currentAnalysisResult = result;
+  if (result.input) persistCurrentInput(result.input);
+  persistAnalysisResult(STORED_RESULT_KEY, result);
+  sessionStorage.removeItem(HISTORY_RESULT_KEY);
   renderSummary(result);
   renderMethods(result);
 }
@@ -463,7 +486,11 @@ function goToResults() {
     window.AppAuth.showGlobalMessage("تنظیمات Supabase هنوز وارد نشده است. فایل تنظیمات را کامل کن تا ثبت سوابق فعال شود.", "warning");
     return;
   }
-  persistCurrentInput();
+  const gases = getFormGases();
+  const result = analyzeDGA(gases);
+  persistCurrentInput(gases);
+  persistAnalysisResult(STORED_RESULT_KEY, result);
+  sessionStorage.removeItem(HISTORY_RESULT_KEY);
   sessionStorage.setItem(PENDING_ANALYSIS_KEY, "1");
   window.location.href = "results.html";
 }
@@ -483,6 +510,13 @@ function initResultsPage() {
   renderStoredAnalysis();
   setupInfoSheet();
   savePendingAnalysisIfNeeded();
+  document.querySelector("[data-back]")?.addEventListener("click", () => {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.href = "index.html";
+  });
   const exportButton = document.querySelector(".export-button");
   if (exportButton) {
     exportButton.addEventListener("click", () => {
@@ -516,7 +550,7 @@ function renderHistoryList(items) {
       .join("");
 
     return `
-      <article class="history-card panel">
+      <article class="history-card panel" role="button" tabindex="0" data-history-result='${escapeHtml(JSON.stringify(result))}'>
         <div class="history-card-top">
           ${renderSeverityBadge(definition)}
           <span class="history-date">${escapeHtml(formatDateTime(item.created_at))}</span>
@@ -529,6 +563,20 @@ function renderHistoryList(items) {
   }).join("");
 }
 
+function openHistoryResult(serializedResult) {
+  if (!serializedResult) return;
+  try {
+    const result = JSON.parse(serializedResult);
+    if (!result || !result.input) return;
+    persistCurrentInput(result.input);
+    persistAnalysisResult(HISTORY_RESULT_KEY, result);
+    sessionStorage.removeItem(PENDING_ANALYSIS_KEY);
+    window.location.href = "results.html";
+  } catch {
+    window.AppAuth?.showGlobalMessage("باز کردن این سابقه ممکن نشد. دوباره تلاش کن.", "danger");
+  }
+}
+
 async function initHistoryPage() {
   const container = $("historyList");
   if (!container) return;
@@ -539,6 +587,18 @@ async function initHistoryPage() {
     return;
   }
   renderHistoryList(data || []);
+  container.addEventListener("click", event => {
+    const card = event.target.closest("[data-history-result]");
+    if (!card) return;
+    openHistoryResult(card.dataset.historyResult);
+  });
+  container.addEventListener("keydown", event => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const card = event.target.closest("[data-history-result]");
+    if (!card) return;
+    event.preventDefault();
+    openHistoryResult(card.dataset.historyResult);
+  });
 }
 
 function openInfoSheet(methodKey) {

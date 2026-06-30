@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>سوابق تست‌ها</title>
+  <title>پروفایل</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -12,28 +12,40 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="page results-page">
+  <main class="page results-page has-app-nav">
     <header class="app-header app-header-results">
       <button class="icon-button export-button" type="button" data-logout aria-label="خروج از حساب">
         <i class="uil uil-signout"></i>
       </button>
-      <h1>سوابق تست‌ها</h1>
-      <a class="icon-button back-button" href="index.html" aria-label="بازگشت">
-        <span>‹</span>
-      </a>
+      <h1>پروفایل</h1>
+      <span class="header-spacer" aria-hidden="true"></span>
     </header>
 
     <section class="results-stack">
-      <section class="panel account-summary">
+      <section class="panel account-summary profile-summary">
         <div>
-          <span class="account-kicker">حساب فعال</span>
+          <span class="account-kicker">پروفایل شما</span>
           <strong class="account-name" data-user-name></strong>
           <p class="account-meta"><span data-user-mobile></span> | <span data-company-name></span></p>
         </div>
-        <a href="guide.html" class="button-link secondary compact-link">راهنما</a>
+      </section>
+
+      <section class="panel profile-links">
+        <a href="guide.html" class="profile-link-row">
+          <span class="profile-link-icon"><i class="uil uil-book-open"></i></span>
+          <span class="profile-link-copy">
+            <strong>راهنما</strong>
+            <small>روش تحلیل و درباره اپلیکیشن را ببین</small>
+          </span>
+          <i class="uil uil-angle-left-b"></i>
+        </a>
       </section>
 
       <div data-global-message hidden></div>
+
+      <section class="section-heading profile-history-heading">
+        <h2>سوابق شما</h2>
+      </section>
 
       <section id="historyEmpty" class="panel empty-state" hidden>
         <h2>هنوز تستی ثبت نشده</h2>
@@ -44,6 +56,17 @@
       <section id="historyList" class="history-stack"></section>
     </section>
   </main>
+
+  <nav class="bottom-nav" aria-label="ناوبری اصلی">
+    <a href="index.html" class="bottom-nav-item">
+      <i class="uil uil-estate"></i>
+      <span>خانه</span>
+    </a>
+    <a href="history.html" class="bottom-nav-item is-active" aria-current="page">
+      <i class="uil uil-user"></i>
+      <span>پروفایل</span>
+    </a>
+  </nav>
 
   <script src="diagnosisEngine.js"></script>
   <script src="faultDefinitions.js"></script>
