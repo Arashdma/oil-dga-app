@@ -15,8 +15,12 @@ create table if not exists public.analyses (
   final_diagnosis text not null,
   confidence text not null,
   tdcg numeric not null,
+  hidden_from_user_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.analyses
+add column if not exists hidden_from_user_at timestamptz;
 
 alter table public.profiles enable row level security;
 alter table public.analyses enable row level security;
@@ -55,4 +59,12 @@ create policy "analyses_insert_own"
 on public.analyses
 for insert
 to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "analyses_update_own" on public.analyses;
+create policy "analyses_update_own"
+on public.analyses
+for update
+to authenticated
+using (auth.uid() = user_id)
 with check (auth.uid() = user_id);

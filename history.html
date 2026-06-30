@@ -86,6 +86,36 @@
     </a>
   </nav>
 
+  <div id="historyDeleteModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="historyDeleteBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="historyDeleteTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="historyDeleteTitle" class="confirm-modal-title">از حذف این سابقه مطمئن هستید؟</h2>
+      <p class="confirm-modal-text">با انجام این کار، نتیجه‌های این تست دیگر در دسترس شما قرار نخواهد گرفت.</p>
+      <div class="confirm-modal-actions">
+        <button id="historyDeleteConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، حذف شود</button>
+        <button id="historyDeleteCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="logoutModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="logoutBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="logoutTitle" class="confirm-modal-title">از خروج از حساب مطمئن هستید؟</h2>
+      <p class="confirm-modal-text">با خروج از حساب، برای دیدن سوابق و ثبت تحلیل‌های جدید باید دوباره وارد شوید.</p>
+      <div class="confirm-modal-actions">
+        <button id="logoutConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، خارج شوم</button>
+        <button id="logoutCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
+    </section>
+  </div>
+
   <script src="diagnosisEngine.js"></script>
   <script src="faultDefinitions.js"></script>
   <script src="supabase-config.js"></script>

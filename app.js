@@ -19,12 +19,15 @@ const methodLabels = {
 const methodOrder = ["ROGERS", "IEC", "POTG", "DUVAL", "DORENBERG", "IEEE"];
 let currentAnalysisResult = null;
 let infoSheetState = null;
+let historyDeleteModalState = null;
+let logoutModalState = null;
 const HISTORY_PAGE_SIZE = 5;
 const historyState = {
   items: [],
   loading: false,
   hasMore: true,
-  observer: null
+  observer: null,
+  deletingId: null
 };
 
 const methodInfoLibrary = {
@@ -529,12 +532,20 @@ function buildHistoryCard(item) {
   const gasSummary = fields
     .map(key => `<span class="history-chip">${escapeHtml(key)}: ${escapeHtml(formatNumber(gases[key] ?? 0))}</span>`)
     .join("");
+  const isBusy = historyState.deletingId === item.id ? " is-busy" : "";
 
   return `
-    <article class="history-card panel" role="button" tabindex="0" data-history-result='${escapeHtml(JSON.stringify(result))}'>
+    <article class="history-card panel${isBusy}" role="button" tabindex="0" data-history-id="${escapeHtml(String(item.id))}" data-history-result='${escapeHtml(JSON.stringify(result))}'>
       <div class="history-card-top">
-        ${renderSeverityBadge(definition)}
-        <span class="history-date">${escapeHtml(formatDateTime(item.created_at))}</span>
+        <div class="history-card-meta">
+          ${renderSeverityBadge(definition)}
+          <span class="history-date">${escapeHtml(formatDateTime(item.created_at))}</span>
+        </div>
+        <div class="history-card-actions">
+          <button class="icon-button history-delete-button" type="button" data-history-delete="${escapeHtml(String(item.id))}" aria-label="حذف این سابقه">
+            <i class="uil uil-trash-alt"></i>
+          </button>
+        </div>
       </div>
       <strong class="history-title">${escapeHtml(definition.title)}</strong>
       <p class="history-subtitle">اعتماد ${escapeHtml(item.confidence || result.confidence || "نامشخص")} | TDCG: ${escapeHtml(formatNumber(item.tdcg ?? result.tdcg ?? 0))}</p>
@@ -579,16 +590,167 @@ function openHistoryResult(serializedResult) {
   }
 }
 
+function openAnimatedModal(shell) {
+  if (!shell) return;
+  shell.hidden = false;
+  shell.setAttribute("aria-hidden", "false");
+  requestAnimationFrame(() => {
+    shell.classList.add("is-open");
+  });
+  document.body.style.overflow = "hidden";
+}
+
+function closeAnimatedModal(shell, onClosed) {
+  if (!shell || shell.hidden) {
+    if (typeof onClosed === "function") onClosed();
+    return;
+  }
+  shell.classList.remove("is-open");
+  window.setTimeout(() => {
+    shell.hidden = true;
+    shell.setAttribute("aria-hidden", "true");
+    if (!document.querySelector(".sheet-shell.is-open")) {
+      document.body.style.overflow = "";
+    }
+    if (typeof onClosed === "function") onClosed();
+  }, 220);
+}
+
+function setupHistoryDeleteModal() {
+  if (historyDeleteModalState || !$("historyDeleteModal")) return;
+  historyDeleteModalState = {
+    shell: $("historyDeleteModal"),
+    backdrop: $("historyDeleteBackdrop"),
+    confirm: $("historyDeleteConfirm"),
+    cancel: $("historyDeleteCancel"),
+    activeId: null
+  };
+
+  historyDeleteModalState.backdrop?.addEventListener("click", closeHistoryDeleteModal);
+  historyDeleteModalState.cancel?.addEventListener("click", closeHistoryDeleteModal);
+  historyDeleteModalState.confirm?.addEventListener("click", confirmHistoryDelete);
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && logoutModalState && !logoutModalState.shell.hidden) {
+      closeLogoutModal();
+      return;
+    }
+    if (event.key === "Escape" && historyDeleteModalState?.activeId !== null) {
+      closeHistoryDeleteModal();
+    }
+  });
+}
+
+function openHistoryDeleteModal(analysisId) {
+  setupHistoryDeleteModal();
+  if (!historyDeleteModalState) return;
+  historyDeleteModalState.activeId = Number(analysisId);
+  historyDeleteModalState.confirm.disabled = false;
+  historyDeleteModalState.confirm.textContent = "بله، حذف شود";
+  openAnimatedModal(historyDeleteModalState.shell);
+}
+
+function closeHistoryDeleteModal() {
+  if (!historyDeleteModalState) return;
+  historyDeleteModalState.activeId = null;
+  historyDeleteModalState.confirm.disabled = false;
+  historyDeleteModalState.confirm.textContent = "بله، حذف شود";
+  closeAnimatedModal(historyDeleteModalState.shell);
+}
+
+function setupLogoutModal() {
+  if (logoutModalState || !$("logoutModal")) return;
+  logoutModalState = {
+    shell: $("logoutModal"),
+    backdrop: $("logoutBackdrop"),
+    confirm: $("logoutConfirm"),
+    cancel: $("logoutCancel")
+  };
+
+  logoutModalState.backdrop?.addEventListener("click", closeLogoutModal);
+  logoutModalState.cancel?.addEventListener("click", closeLogoutModal);
+  logoutModalState.confirm?.addEventListener("click", confirmLogout);
+
+  document.querySelectorAll("[data-logout]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      openLogoutModal();
+    });
+  });
+}
+
+function openLogoutModal() {
+  setupLogoutModal();
+  if (!logoutModalState) return;
+  logoutModalState.confirm.disabled = false;
+  logoutModalState.confirm.textContent = "بله، خارج شوم";
+  openAnimatedModal(logoutModalState.shell);
+}
+
+function closeLogoutModal() {
+  if (!logoutModalState) return;
+  logoutModalState.confirm.disabled = false;
+  logoutModalState.confirm.textContent = "بله، خارج شوم";
+  closeAnimatedModal(logoutModalState.shell);
+}
+
+async function confirmLogout() {
+  if (!logoutModalState) return;
+  logoutModalState.confirm.disabled = true;
+  logoutModalState.confirm.textContent = "در حال خروج...";
+  await window.AppAuth?.signOut?.();
+  closeLogoutModal();
+}
+
+function updateHistoryView() {
+  renderHistoryList(historyState.items, { append: false });
+}
+
+async function confirmHistoryDelete() {
+  if (!historyDeleteModalState || historyDeleteModalState.activeId === null) return;
+  const analysisId = historyDeleteModalState.activeId;
+  historyState.deletingId = analysisId;
+  historyDeleteModalState.confirm.disabled = true;
+  historyDeleteModalState.confirm.textContent = "در حال حذف...";
+  updateHistoryView();
+
+  const { error } = await window.AppAuth.hideAnalysis(analysisId);
+  historyState.deletingId = null;
+
+  if (error) {
+    closeHistoryDeleteModal();
+    updateHistoryView();
+    window.AppAuth?.showToast(`حذف سابقه انجام نشد: ${error}`, "danger");
+    return;
+  }
+
+  historyState.items = historyState.items.filter(item => Number(item.id) !== analysisId);
+  closeHistoryDeleteModal();
+  updateHistoryView();
+  if (!historyState.items.length && !historyState.hasMore) {
+    renderHistoryList([], { append: false });
+  }
+  window.AppAuth?.showToast("سابقه از لیست شما مخفی شد.", "success");
+}
+
 async function initHistoryPage() {
   const container = $("historyList");
   const loadMore = $("historyLoadMore");
   const loadMoreText = $("historyLoadMoreText");
   if (!container || !loadMore || !loadMoreText) return;
+
+  function updateLoadMoreState({ visible, loadingMore = false }) {
+    loadMore.hidden = !visible;
+    loadMoreText.hidden = !visible || !loadingMore;
+  }
+
   historyState.items = [];
   historyState.loading = false;
   historyState.hasMore = true;
-  loadMore.hidden = false;
-  loadMoreText.hidden = true;
+  historyState.deletingId = null;
+  setupHistoryDeleteModal();
+  setupLogoutModal();
+  updateLoadMoreState({ visible: true, loadingMore: false });
   container.innerHTML = `
     <div class="panel history-loading history-loading-panel">
       <div class="history-loading-more">
@@ -603,11 +765,22 @@ async function initHistoryPage() {
   `;
 
   container.addEventListener("click", event => {
+    const deleteButton = event.target.closest("[data-history-delete]");
+    if (deleteButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      openHistoryDeleteModal(deleteButton.dataset.historyDelete);
+      return;
+    }
     const card = event.target.closest("[data-history-result]");
     if (!card) return;
     openHistoryResult(card.dataset.historyResult);
   });
   container.addEventListener("keydown", event => {
+    if ((event.key === "Enter" || event.key === " ") && event.target.closest("[data-history-delete]")) {
+      event.preventDefault();
+      return;
+    }
     if (event.key !== "Enter" && event.key !== " ") return;
     const card = event.target.closest("[data-history-result]");
     if (!card) return;
@@ -619,17 +792,18 @@ async function initHistoryPage() {
     if (historyState.loading || !historyState.hasMore) return;
     historyState.loading = true;
     const isFirstPage = historyState.items.length === 0;
-    loadMore.hidden = false;
-    loadMoreText.hidden = isFirstPage;
+    updateLoadMoreState({ visible: true, loadingMore: !isFirstPage });
     const { data, error } = await window.AppAuth.listAnalyses({
       limit: HISTORY_PAGE_SIZE + 1,
       offset: historyState.items.length
     });
     historyState.loading = false;
-    loadMoreText.hidden = true;
+    updateLoadMoreState({ visible: true, loadingMore: false });
     if (error) {
       container.innerHTML = `<div class="panel history-loading history-error">${escapeHtml(error)}</div>`;
       historyState.hasMore = false;
+      updateLoadMoreState({ visible: false, loadingMore: false });
+      historyState.observer?.disconnect?.();
       return;
     }
 
@@ -639,7 +813,10 @@ async function initHistoryPage() {
     renderHistoryList(nextItems, { append: !isFirstPage });
     historyState.items.push(...nextItems);
     historyState.hasMore = fetchedItems.length > HISTORY_PAGE_SIZE;
-    loadMore.hidden = !historyState.hasMore;
+    updateLoadMoreState({ visible: historyState.hasMore, loadingMore: false });
+    if (!historyState.hasMore) {
+      historyState.observer?.disconnect?.();
+    }
     if (!historyState.hasMore && !historyState.items.length) {
       renderHistoryList([], { append: false });
     }
@@ -666,21 +843,18 @@ function openInfoSheet(methodKey) {
   infoSheetState.sheet.style.transition = "transform 240ms ease";
   infoSheetState.sheet.style.transform = "translate(50%, 0)";
   infoSheetState.backdrop.style.opacity = "1";
-  infoSheetState.shell.classList.add("is-open");
-  infoSheetState.shell.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
+  openAnimatedModal(infoSheetState.shell);
 }
 
 function closeInfoSheet() {
   if (!infoSheetState) return;
   infoSheetState.activeMethod = null;
   infoSheetState.dragY = 0;
-  infoSheetState.shell.classList.remove("is-open");
-  infoSheetState.shell.setAttribute("aria-hidden", "true");
-  infoSheetState.sheet.style.transition = "";
-  infoSheetState.sheet.style.transform = "";
-  infoSheetState.backdrop.style.opacity = "";
-  document.body.style.overflow = "";
+  closeAnimatedModal(infoSheetState.shell, () => {
+    infoSheetState.sheet.style.transition = "";
+    infoSheetState.sheet.style.transform = "";
+    infoSheetState.backdrop.style.opacity = "";
+  });
 }
 
 function setupInfoSheet() {

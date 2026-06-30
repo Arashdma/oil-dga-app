@@ -93,7 +93,7 @@
     if (!message) return;
     const root = ensureToastRoot();
     const toast = document.createElement("div");
-    const duration = options.duration ?? (tone === "danger" ? 5200 : 3600);
+    const duration = Math.min(options.duration ?? 3000, 3000);
     toast.className = `toast toast-${tone}`;
     toast.innerHTML = `
       <div class="toast-content">
@@ -150,7 +150,7 @@
         return;
       }
       setOffset(0);
-      timerId = window.setTimeout(closeToast, 2200);
+      timerId = window.setTimeout(closeToast, duration);
       if (event?.pointerId !== undefined && toast.hasPointerCapture(event.pointerId)) {
         toast.releasePointerCapture(event.pointerId);
       }
@@ -343,12 +343,26 @@
     const { data, error } = await client
       .from("analyses")
       .select("id, input, result, final_diagnosis, confidence, tdcg, created_at")
+      .is("hidden_from_user_at", null)
       .range(offset, Math.max(offset, offset + limit - 1))
       .order("created_at", { ascending: false });
     return {
       data: data || [],
       error: error ? mapAuthError(error) : null
     };
+  }
+
+  async function hideAnalysis(analysisId) {
+    const client = createClient();
+    if (!client || !state.user) return { error: "برای حذف سابقه باید وارد حساب شوید." };
+    const { error } = await client
+      .from("analyses")
+      .update({ hidden_from_user_at: new Date().toISOString() })
+      .eq("id", analysisId)
+      .eq("user_id", state.user.id)
+      .is("hidden_from_user_at", null);
+
+    return { error: error ? mapAuthError(error) : null };
   }
 
   function bindAuthForms() {
@@ -442,15 +456,7 @@
     });
   }
 
-  function bindCommonActions() {
-    document.querySelectorAll("[data-logout]").forEach(button => {
-      button.addEventListener("click", signOut);
-    });
-  }
-
   async function boot() {
-    bindCommonActions();
-
     if (!isConfigured()) {
       showGlobalMessage("برای فعال شدن لاگین و ذخیره سوابق، فایل supabase-config.js را با URL و ANON KEY پروژه کامل کن.", "warning");
       if (pageName === authPage) bindAuthForms();
@@ -499,8 +505,9 @@
     getProfile: () => state.profile,
     showGlobalMessage,
     saveAnalysis,
-    listAnalyses
-    ,
+    listAnalyses,
+    hideAnalysis,
+    signOut,
     showToast
   };
 }());
