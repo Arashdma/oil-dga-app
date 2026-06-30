@@ -25,6 +25,11 @@
 
     <section class="results-stack">
       <div id="summary" class="summary"></div>
+      <div id="saveStatus" class="save-status" hidden></div>
+      <section class="panel result-actions">
+        <a href="history.html" class="button-link secondary compact-link"><i class="uil uil-history"></i> دیدن سوابق</a>
+        <button class="button-link secondary compact-link" type="button" data-logout><i class="uil uil-signout"></i> خروج</button>
+      </section>
       <section class="panel methods-panel">
         <div class="section-heading">
           <h2>خلاصه روش‌ها</h2>
@@ -50,6 +55,9 @@
 
   <script src="diagnosisEngine.js"></script>
   <script src="faultDefinitions.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

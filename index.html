@@ -24,7 +24,21 @@
       <div class="hero-copy">
         <span class="eyebrow">⚡ ارزیابی سریع</span>
         <h1>آنالیز گازهای محلول در روغن ترانسفورماتور</h1>
-        <p class="subtitle">مقادیر گازهای محلول را وارد کنید و نتیجه را ببینید.</p>
+        <p class="subtitle">ورودی‌ها را ثبت کن تا نتیجه هم نمایش داده شود و هم داخل سوابق همان حساب ذخیره شود.</p>
+      </div>
+    </section>
+
+    <div data-global-message hidden></div>
+
+    <section class="panel account-summary">
+      <div>
+        <span class="account-kicker">حساب فعال</span>
+        <strong class="account-name" data-user-name></strong>
+        <p class="account-meta"><span data-user-mobile></span> | <span data-company-name></span></p>
+      </div>
+      <div class="quick-actions">
+        <a href="history.html" class="button-link secondary compact-link"><i class="uil uil-history"></i> سوابق</a>
+        <button class="button-link secondary compact-link" type="button" data-logout><i class="uil uil-signout"></i> خروج</button>
       </div>
     </section>
 
@@ -54,11 +68,13 @@
         <button id="analyzeBtn" class="primary form-submit"><i class="uil uil-chart-pie-alt"></i> بررسی و تحلیل</button>
       </section>
     </section>
-
   </main>
 
   <script src="diagnosisEngine.js"></script>
   <script src="faultDefinitions.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

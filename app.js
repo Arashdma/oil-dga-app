@@ -1,8 +1,11 @@
 function $(id) { return document.getElementById(id); }
 
 const fields = ["H2", "CH4", "C2H2", "C2H4", "C2H6", "CO", "CO2"];
-const isResultsPage = window.location.pathname.endsWith("/results.html") || window.location.pathname.endsWith("results.html");
 const STORAGE_KEY = "oilDgaLastInput";
+const PENDING_ANALYSIS_KEY = "oilDgaPendingAnalysis";
+const pathName = window.location.pathname;
+const isResultsPage = pathName.endsWith("/results.html") || pathName.endsWith("results.html");
+const isHistoryPage = pathName.endsWith("/history.html") || pathName.endsWith("history.html");
 const methodLabels = {
   IEEE: "IEEE",
   IEC: "IEC 60599",
@@ -116,6 +119,14 @@ function formatMixedLabel(value) {
     }
     return formatNumber(Number(match));
   });
+}
+
+function formatDateTime(value) {
+  if (!value) return "نامشخص";
+  return new Intl.DateTimeFormat("fa-IR", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
 }
 
 function escapeHtml(value) {
@@ -405,11 +416,34 @@ function renderMethods(result) {
   `;
 }
 
-function analyzeAndRender() {
-  const result = analyzeDGA(getFormGases());
-  currentAnalysisResult = result;
-  renderSummary(result);
-  renderMethods(result);
+function renderSaveStatus(message, tone = "neutral") {
+  const box = $("saveStatus");
+  if (!box) return;
+  box.hidden = false;
+  box.className = `save-status save-status-${tone}`;
+  box.textContent = message;
+}
+
+async function savePendingAnalysisIfNeeded() {
+  if (!sessionStorage.getItem(PENDING_ANALYSIS_KEY) || !currentAnalysisResult) return;
+  if (!window.AppAuth?.isConfigured()) {
+    renderSaveStatus("اتصال دیتابیس هنوز تنظیم نشده و این تست در سوابق ذخیره نشد.", "warning");
+    return;
+  }
+  if (!window.AppAuth?.isAuthenticated()) {
+    renderSaveStatus("برای ذخیره تست باید وارد حساب شوید.", "warning");
+    return;
+  }
+
+  renderSaveStatus("در حال ثبت این تست در سوابق شما...", "neutral");
+  const { error } = await window.AppAuth.saveAnalysis(currentAnalysisResult);
+  if (error) {
+    renderSaveStatus(`ذخیره تست انجام نشد: ${error}`, "danger");
+    return;
+  }
+
+  sessionStorage.removeItem(PENDING_ANALYSIS_KEY);
+  renderSaveStatus("این تست با موفقیت به سوابق حساب شما اضافه شد.", "success");
 }
 
 function renderStoredAnalysis() {
@@ -425,18 +459,30 @@ function renderStoredAnalysis() {
 }
 
 function goToResults() {
+  if (window.AppAuth?.isConfigured && !window.AppAuth.isConfigured()) {
+    window.AppAuth.showGlobalMessage("تنظیمات Supabase هنوز وارد نشده است. فایل تنظیمات را کامل کن تا ثبت سوابق فعال شود.", "warning");
+    return;
+  }
   persistCurrentInput();
+  sessionStorage.setItem(PENDING_ANALYSIS_KEY, "1");
   window.location.href = "results.html";
 }
 
 function initEntryPage() {
+  const storedInput = getStoredInput();
+  if (storedInput) {
+    fields.forEach(key => {
+      if (storedInput[key] !== undefined) setFieldValue(key, storedInput[key]);
+    });
+  }
   attachPersianNumericBehavior();
-  $("analyzeBtn").addEventListener("click", goToResults);
+  $("analyzeBtn")?.addEventListener("click", goToResults);
 }
 
 function initResultsPage() {
   renderStoredAnalysis();
   setupInfoSheet();
+  savePendingAnalysisIfNeeded();
   const exportButton = document.querySelector(".export-button");
   if (exportButton) {
     exportButton.addEventListener("click", () => {
@@ -447,6 +493,52 @@ function initResultsPage() {
       window.print();
     });
   }
+}
+
+function renderHistoryList(items) {
+  const container = $("historyList");
+  const empty = $("historyEmpty");
+  if (!container || !empty) return;
+
+  if (!items.length) {
+    empty.hidden = false;
+    container.innerHTML = "";
+    return;
+  }
+
+  empty.hidden = true;
+  container.innerHTML = items.map(item => {
+    const result = item.result || {};
+    const definition = getFaultDefinition(item.final_diagnosis || result.finalDiagnosis);
+    const gases = result.input || item.input || {};
+    const gasSummary = fields
+      .map(key => `<span class="history-chip">${escapeHtml(key)}: ${escapeHtml(formatNumber(gases[key] ?? 0))}</span>`)
+      .join("");
+
+    return `
+      <article class="history-card panel">
+        <div class="history-card-top">
+          ${renderSeverityBadge(definition)}
+          <span class="history-date">${escapeHtml(formatDateTime(item.created_at))}</span>
+        </div>
+        <strong class="history-title">${escapeHtml(definition.title)}</strong>
+        <p class="history-subtitle">اعتماد ${escapeHtml(item.confidence || result.confidence || "نامشخص")} | TDCG: ${escapeHtml(formatNumber(item.tdcg ?? result.tdcg ?? 0))}</p>
+        <div class="history-chip-row">${gasSummary}</div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function initHistoryPage() {
+  const container = $("historyList");
+  if (!container) return;
+  container.innerHTML = `<div class="panel history-loading">در حال بارگذاری سوابق شما...</div>`;
+  const { data, error } = await window.AppAuth.listAnalyses();
+  if (error) {
+    container.innerHTML = `<div class="panel history-loading history-error">${escapeHtml(error)}</div>`;
+    return;
+  }
+  renderHistoryList(data || []);
 }
 
 function openInfoSheet(methodKey) {
@@ -540,8 +632,17 @@ function setupInfoSheet() {
   infoSheetState.handle.addEventListener("pointercancel", releaseSheet);
 }
 
-if (isResultsPage) {
-  initResultsPage();
-} else {
+async function bootPage() {
+  if (window.AppAuth?.ready) await window.AppAuth.ready;
+  if (isResultsPage) {
+    initResultsPage();
+    return;
+  }
+  if (isHistoryPage) {
+    initHistoryPage();
+    return;
+  }
   initEntryPage();
 }
+
+document.addEventListener("DOMContentLoaded", bootPage);

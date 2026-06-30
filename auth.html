@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ورود و ساخت حساب</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page auth-page">
+    <header class="app-header app-header-form">
+      <a class="brand" href="index.html" aria-label="آسان تدبیر نیرو">
+        <img src="assets/logo.png" alt="لوگوی آسان تدبیر نیرو" />
+        <strong>تحلیل روغن ترانس</strong>
+      </a>
+    </header>
+
+    <section class="hero auth-hero">
+      <div class="hero-copy">
+        <span class="eyebrow">حساب کاربری</span>
+        <h1>ورود با شماره موبایل</h1>
+        <p class="subtitle">یک بار حساب بساز و از این به بعد تمام تست‌ها زیر همان حساب ذخیره می‌شوند.</p>
+      </div>
+    </section>
+
+    <div data-global-message hidden></div>
+
+    <section class="panel auth-shell">
+      <div class="auth-tab-row">
+        <button class="auth-tab is-active" type="button" data-auth-tab="login">ورود</button>
+        <button class="auth-tab" type="button" data-auth-tab="register">ساخت حساب</button>
+      </div>
+
+      <section data-auth-panel="login" class="auth-panel">
+        <form id="loginForm" class="auth-form">
+          <label class="field">
+            <span>شماره موبایل</span>
+            <span class="input-wrap"><input name="mobile" type="tel" inputmode="numeric" placeholder="۰۹۱۲..." required /></span>
+          </label>
+          <label class="field">
+            <span>رمز عبور</span>
+            <span class="input-wrap"><input name="password" type="password" placeholder="رمز عبور" required /></span>
+          </label>
+          <button class="primary form-submit" type="submit"><i class="uil uil-signin"></i> ورود به حساب</button>
+        </form>
+        <div id="loginMessage" class="auth-message" hidden></div>
+      </section>
+
+      <section data-auth-panel="register" class="auth-panel" hidden>
+        <form id="registerForm" class="auth-form">
+          <div class="grid-form auth-grid">
+            <label class="field">
+              <span>نام</span>
+              <span class="input-wrap"><input name="firstName" type="text" placeholder="نام" required /></span>
+            </label>
+            <label class="field">
+              <span>نام خانوادگی</span>
+              <span class="input-wrap"><input name="lastName" type="text" placeholder="نام خانوادگی" required /></span>
+            </label>
+            <label class="field field-wide">
+              <span>نام شرکت</span>
+              <span class="input-wrap"><input name="companyName" type="text" placeholder="مثلاً شرکت برق ..." required /></span>
+            </label>
+            <label class="field field-wide">
+              <span>شماره موبایل</span>
+              <span class="input-wrap"><input name="mobile" type="tel" inputmode="numeric" placeholder="۰۹۱۲..." required /></span>
+            </label>
+            <label class="field">
+              <span>رمز عبور</span>
+              <span class="input-wrap"><input name="password" type="password" placeholder="حداقل ۶ کاراکتر" required /></span>
+            </label>
+            <label class="field">
+              <span>تکرار رمز</span>
+              <span class="input-wrap"><input name="confirmPassword" type="password" placeholder="تکرار رمز" required /></span>
+            </label>
+          </div>
+          <button class="primary form-submit" type="submit"><i class="uil uil-user-plus"></i> ساخت حساب</button>
+        </form>
+        <div id="registerMessage" class="auth-message" hidden></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

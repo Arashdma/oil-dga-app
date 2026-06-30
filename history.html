@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سوابق تست‌ها</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page results-page">
+    <header class="app-header app-header-results">
+      <button class="icon-button export-button" type="button" data-logout aria-label="خروج از حساب">
+        <i class="uil uil-signout"></i>
+      </button>
+      <h1>سوابق تست‌ها</h1>
+      <a class="icon-button back-button" href="index.html" aria-label="بازگشت">
+        <span>‹</span>
+      </a>
+    </header>
+
+    <section class="results-stack">
+      <section class="panel account-summary">
+        <div>
+          <span class="account-kicker">حساب فعال</span>
+          <strong class="account-name" data-user-name></strong>
+          <p class="account-meta"><span data-user-mobile></span> | <span data-company-name></span></p>
+        </div>
+        <a href="guide.html" class="button-link secondary compact-link">راهنما</a>
+      </section>
+
+      <div data-global-message hidden></div>
+
+      <section id="historyEmpty" class="panel empty-state" hidden>
+        <h2>هنوز تستی ثبت نشده</h2>
+        <p>بعد از اولین تحلیل، رکورد آن اینجا می‌آید.</p>
+        <a href="index.html" class="button-link">ثبت اولین تست</a>
+      </section>
+
+      <section id="historyList" class="history-stack"></section>
+    </section>
+  </main>
+
+  <script src="diagnosisEngine.js"></script>
+  <script src="faultDefinitions.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
