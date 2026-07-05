@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>پنل مدیریت</title>
+  <meta name="application-name" content="ATN | Oil Gas Analyzer" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ATN | Oil Gas Analyzer" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="../manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="../assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <main class="page results-page admin-page">
+    <header class="app-header app-header-results">
+      <a class="icon-button back-button" href="../profile.html" aria-label="بازگشت به پروفایل">
+        <span>‹</span>
+      </a>
+      <h1>پنل مدیریت</h1>
+      <button class="icon-button export-button" type="button" data-logout aria-label="خروج از حساب">
+        <i class="uil uil-signout"></i>
+      </button>
+    </header>
+
+    <section class="results-stack">
+      <section class="panel account-summary admin-summary-hero">
+        <div class="admin-summary-copy">
+          <span class="account-kicker">دسترسی مدیر</span>
+          <strong class="account-name">نمای کلی کاربران و فعالیت‌ها</strong>
+          <p class="subtitle admin-subtitle">در این بخش می‌توانید ببینید چه کاربرهایی ثبت‌نام کرده‌اند و هر کدام چند تحلیل و چند ترانسفورماتور ثبت کرده‌اند.</p>
+          <button id="adminRefreshButton" class="button-link" type="button">
+            <i class="uil uil-sync"></i>
+            <span>تازه‌سازی اطلاعات</span>
+          </button>
+        </div>
+      </section>
+
+      <div data-global-message hidden></div>
+
+      <section class="profile-stats-grid admin-stats-grid" aria-label="خلاصه آمار">
+        <article class="panel profile-stat-card">
+          <span class="profile-stat-label">کل کاربران ثبت‌نام‌شده</span>
+          <strong class="profile-stat-value" data-admin-total-users>۰</strong>
+        </article>
+        <article class="panel profile-stat-card">
+          <span class="profile-stat-label">مجموع تحلیل‌های ثبت‌شده</span>
+          <strong class="profile-stat-value" data-admin-total-analyses>۰</strong>
+        </article>
+        <article class="panel profile-stat-card">
+          <span class="profile-stat-label">مجموع ترانسفورماتورها</span>
+          <strong class="profile-stat-value" data-admin-total-projects>۰</strong>
+        </article>
+      </section>
+
+      <section class="panel admin-settings-panel" aria-label="تنظیمات نسخه رایگان">
+        <div class="section-heading admin-settings-heading">
+          <div>
+            <h2>تنظیمات نسخه رایگان</h2>
+            <span>این مقدار بدون نیاز به انتشار نسخه جدید، از همین پنل قابل تغییر است.</span>
+          </div>
+        </div>
+        <form id="freeLimitForm" class="admin-settings-form">
+          <label class="field admin-limit-field">
+            <span>سقف تعداد تحلیل رایگان</span>
+            <span class="input-wrap">
+              <input id="freeLimitInput" name="freeLimit" type="text" inputmode="numeric" placeholder="مثلاً ۳۰" />
+              <small>تحلیل</small>
+            </span>
+          </label>
+          <button id="freeLimitSubmit" class="button-link" type="submit">ذخیره تنظیمات</button>
+        </form>
+      </section>
+
+      <section id="adminLoadingState" class="panel empty-state history-loading-panel">
+        <div class="history-loading-more" aria-live="polite">
+          <span>در حال دریافت اطلاعات کاربران</span>
+          <span class="loading-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </div>
+      </section>
+
+      <section id="adminEmptyState" class="panel empty-state history-empty-state" hidden>
+        <div class="history-empty-icon" aria-hidden="true">
+          <i class="uil uil-users-alt"></i>
+        </div>
+        <span class="history-empty-kicker">فعلاً داده‌ای ثبت نشده</span>
+        <h2>هنوز کاربری برای نمایش وجود ندارد</h2>
+        <p>پس از ثبت‌نام کاربران، فهرست آن‌ها همراه با آمار فعالیت در این بخش نمایش داده خواهد شد.</p>
+      </section>
+
+      <section id="adminTableSection" class="panel admin-table-panel" hidden>
+        <div class="section-heading admin-table-heading">
+          <div>
+            <h2>فهرست کاربران</h2>
+            <span id="adminLastUpdatedText">آخرین بروزرسانی: -</span>
+          </div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table" aria-label="فهرست کاربران">
+            <thead>
+              <tr>
+                <th>نام کاربر</th>
+                <th>شماره موبایل</th>
+                <th>شرکت</th>
+                <th>تاریخ ثبت‌نام</th>
+                <th>وضعیت اشتراک</th>
+                <th>تعداد تحلیل</th>
+                <th>تعداد ترانس</th>
+                <th>اقدامات</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="logoutModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="logoutBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="logoutTitle" class="confirm-modal-title">از خروج از حساب مطمئن هستید؟</h2>
+      <p class="confirm-modal-text">پس از خروج از حساب کاربری، برای دسترسی دوباره به این پنل باید مجدداً وارد شوید.</p>
+      <div class="confirm-modal-actions">
+        <button id="logoutConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، خارج شوم</button>
+        <button id="logoutCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="../supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../auth.js"></script>
+  <script src="../admin.js?v=2"></script>
+</body>
+</html>

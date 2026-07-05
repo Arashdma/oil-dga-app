@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ترانسفورماتورها</title>
+  <meta name="application-name" content="ATN | Oil Gas Analyzer" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ATN | Oil Gas Analyzer" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -70,7 +77,7 @@
         <span class="sheet-handle"></span>
       </div>
       <h2 id="projectFormTitle" class="confirm-modal-title">افزودن ترانسفورماتور جدید</h2>
-      <p class="confirm-modal-text">در این بخش، مشخصات پایه ترانسفورماتور ثبت می‌شود تا ساختار سوابق تحلیلی آن ایجاد گردد.</p>
+      <p id="projectFormText" class="confirm-modal-text">در این بخش، مشخصات پایه ترانسفورماتور ثبت می‌شود تا ساختار سوابق تحلیلی آن ایجاد گردد.</p>
       <form id="projectForm" class="project-form">
         <div class="grid-form auth-grid">
           <label class="field">
@@ -113,6 +120,21 @@
           <button id="projectCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
         </div>
       </form>
+    </section>
+  </div>
+
+  <div id="projectDeleteModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="projectDeleteBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="projectDeleteTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="projectDeleteTitle" class="confirm-modal-title">آیا از حذف این ترانسفورماتور اطمینان دارید؟</h2>
+      <p class="confirm-modal-text">این عملیات غیرقابل بازگشت است و تمام داده‌ها و تحلیل‌های مرتبط با این ترانسفورماتور از دید کاربر حذف خواهند شد.</p>
+      <div class="confirm-modal-actions">
+        <button id="projectDeleteConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، حذف شود</button>
+        <button id="projectDeleteCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
     </section>
   </div>
 

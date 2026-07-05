@@ -149,6 +149,21 @@ select {
   transform: translateY(-50%);
 }
 
+.header-actions {
+  position: absolute;
+  left: var(--space-md);
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(-50%);
+}
+
+.header-actions .icon-button {
+  position: static;
+  transform: none;
+}
+
 .back-button,
 .header-spacer {
   position: absolute;
@@ -1975,10 +1990,19 @@ button.compact-link {
 }
 
 .project-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.project-card-main {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .project-card-brand {
@@ -1998,6 +2022,33 @@ button.compact-link {
 
 .project-card-head-copy {
   min-width: 0;
+}
+
+.project-card-actions,
+.project-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.project-action-button {
+  width: 40px;
+  height: 40px;
+  border-color: rgba(232, 98, 10, 0.14);
+  background: rgba(255, 247, 238, 0.96);
+  color: var(--primary-end);
+}
+
+.project-action-button i {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.project-action-button-danger {
+  border-color: rgba(217, 48, 37, 0.14);
+  background: rgba(253, 235, 234, 0.92);
+  color: var(--danger);
 }
 
 .project-card-kicker {
@@ -2507,6 +2558,181 @@ button.compact-link {
   }
 }
 
+.admin-page {
+  padding-bottom: 32px;
+}
+
+.admin-summary-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.admin-summary-copy {
+  display: grid;
+  gap: 10px;
+  text-align: right;
+}
+
+.admin-summary-copy .account-name {
+  line-height: 1.45;
+}
+
+.admin-subtitle {
+  margin: 0;
+  max-width: 34rem;
+  line-height: 1.9;
+}
+
+.admin-summary-copy .button-link {
+  min-height: 46px;
+  justify-self: start;
+}
+
+.admin-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-settings-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-settings-heading {
+  margin-bottom: 0;
+}
+
+.admin-settings-heading span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.admin-settings-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.admin-limit-field {
+  margin: 0;
+}
+
+.admin-table-panel {
+  padding: 18px;
+  overflow: hidden;
+}
+
+.admin-table-heading {
+  margin-bottom: 14px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(210, 206, 200, 0.9);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #fdfaf5 100%);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 14px 16px;
+  text-align: right;
+  border-bottom: 1px solid rgba(224, 218, 211, 0.9);
+  vertical-align: top;
+}
+
+.admin-table th {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  background: rgba(250, 246, 239, 0.92);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-table tbody tr:nth-child(even) {
+  background: rgba(252, 249, 243, 0.72);
+}
+
+.admin-user-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-user-cell strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.admin-user-cell span {
+  font-size: 12px;
+  color: var(--muted);
+  direction: ltr;
+  text-align: right;
+}
+
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-status-badge.is-pro {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.admin-status-badge.is-free {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.admin-action-button {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.upgrade-sheet {
+  gap: 0;
+  text-align: center;
+}
+
+.upgrade-badge {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.95), transparent 35%),
+    linear-gradient(160deg, #ffd48a 0%, #ff8f1f 100%);
+  box-shadow: 0 16px 30px rgba(232, 98, 10, 0.22);
+  color: #ffffff;
+}
+
+.upgrade-badge i {
+  font-size: 34px;
+  line-height: 1;
+}
+
 .confirm-sheet .sheet-handle-wrap {
   padding: 10px 0 14px;
 }
@@ -2641,7 +2867,17 @@ button.compact-link {
   }
 
   .project-card-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .project-card-main {
     grid-template-columns: 1fr;
+  }
+
+  .project-card-actions,
+  .project-detail-actions {
+    justify-content: flex-end;
   }
 
   .project-card-stats {
@@ -2649,6 +2885,23 @@ button.compact-link {
   }
 
   .profile-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-summary-copy {
+    text-align: right;
+  }
+
+  .admin-summary-copy .button-link {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .admin-settings-form {
     grid-template-columns: 1fr;
   }
 }

@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>نتیجه تحلیل روغن ترانسفورماتور</title>
+  <meta name="application-name" content="ATN | Oil Gas Analyzer" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ATN | Oil Gas Analyzer" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -44,6 +51,24 @@
         <span class="sheet-handle"></span>
       </div>
       <div id="sheetContent" class="sheet-content"></div>
+    </section>
+  </div>
+
+  <div id="upgradeModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="upgradeBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet upgrade-sheet" role="dialog" aria-modal="true" aria-labelledby="upgradeTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <div class="upgrade-badge" aria-hidden="true">
+        <i class="uil uil-sad-dizzy"></i>
+      </div>
+      <h2 id="upgradeTitle" class="confirm-modal-title">سقف نسخه رایگان شما تکمیل شده است</h2>
+      <p id="upgradeMessage" class="confirm-modal-text">برای ادامه ثبت تحلیل‌های جدید، لطفاً نسخه Pro را فعال نمایید.</p>
+      <div class="confirm-modal-actions">
+        <a href="tel:+989126125786" class="button-link call-button confirm-modal-button">ارتقا به نسخه Pro</a>
+        <button id="upgradeClose" class="compact-link confirm-modal-button" type="button">بعداً</button>
+      </div>
     </section>
   </div>
 

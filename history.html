@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>جزئیات ترانسفورماتور</title>
+  <meta name="application-name" content="ATN | Oil Gas Analyzer" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ATN | Oil Gas Analyzer" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -28,6 +35,14 @@
             <span class="account-kicker">مشخصات ترانسفورماتور</span>
             <strong class="project-details-title" data-project-title>در حال بارگذاری اطلاعات...</strong>
             <p class="project-details-subtitle" data-project-subtitle></p>
+          </div>
+          <div class="project-detail-actions">
+            <button class="icon-button project-action-button" type="button" data-project-detail-edit aria-label="ویرایش ترانسفورماتور">
+              <i class="uil uil-pen"></i>
+            </button>
+            <button class="icon-button project-action-button project-action-button-danger" type="button" data-project-detail-delete aria-label="حذف ترانسفورماتور">
+              <i class="uil uil-trash-alt"></i>
+            </button>
           </div>
         </div>
         <div class="project-details-grid">
@@ -128,6 +143,74 @@
       <div class="confirm-modal-actions">
         <button id="historyDeleteConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، حذف شود</button>
         <button id="historyDeleteCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="projectFormModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="projectFormBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet project-form-sheet" role="dialog" aria-modal="true" aria-labelledby="projectFormTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="projectFormTitle" class="confirm-modal-title">ویرایش ترانسفورماتور</h2>
+      <p id="projectFormText" class="confirm-modal-text">در این بخش می‌توانید مشخصات ثبت‌شده ترانسفورماتور را بروزرسانی نمایید.</p>
+      <form id="projectForm" class="project-form">
+        <div class="grid-form auth-grid">
+          <label class="field">
+            <span>نام شرکت</span>
+            <span class="input-wrap"><input name="companyName" type="text" placeholder="مثلاً شرکت برق منطقه‌ای ..." required /></span>
+          </label>
+          <label class="field">
+            <span>نام ایستگاه برق</span>
+            <span class="input-wrap"><input name="stationName" type="text" placeholder="مثلاً پست غرب" required /></span>
+          </label>
+          <label class="field field-wide">
+            <span>شماره ترانسفورماتور</span>
+            <span class="input-wrap"><input name="transformerNumber" type="text" placeholder="مثلاً TR-201" required /></span>
+          </label>
+          <label class="field">
+            <span>سطح ولتاژ (کیلوولت)</span>
+            <span class="input-wrap"><input name="voltageKv" type="text" inputmode="decimal" placeholder="مثلاً 230" /></span>
+          </label>
+          <label class="field">
+            <span>ظرفیت (مگاولت‌آمپر)</span>
+            <span class="input-wrap"><input name="capacityMva" type="text" inputmode="decimal" placeholder="مثلاً 160" /></span>
+          </label>
+          <label class="field">
+            <span>کارخانه سازنده</span>
+            <span class="input-wrap"><input name="manufacturer" type="text" placeholder="مثلاً ایران ترانسفو" /></span>
+          </label>
+          <label class="field">
+            <span>سال ساخت</span>
+            <span class="input-wrap"><input name="manufacturedYear" type="text" inputmode="numeric" placeholder="مثلاً 1398" /></span>
+          </label>
+          <label class="field field-wide">
+            <span>مشخصات تکمیلی</span>
+            <span class="input-wrap">
+              <textarea name="extraNotes" rows="3" placeholder="سایر توضیحات یا مشخصات تکمیلی مورد نیاز را در این بخش ثبت نمایید."></textarea>
+            </span>
+          </label>
+        </div>
+        <div class="confirm-modal-actions">
+          <button id="projectSubmit" class="button-link confirm-modal-button" type="submit">ذخیره تغییرات</button>
+          <button id="projectCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="projectDeleteModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="projectDeleteBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="projectDeleteTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="projectDeleteTitle" class="confirm-modal-title">آیا از حذف این ترانسفورماتور اطمینان دارید؟</h2>
+      <p class="confirm-modal-text">این عملیات غیرقابل بازگشت است و تمام داده‌ها و تحلیل‌های مرتبط با این ترانسفورماتور از دید کاربر حذف خواهند شد.</p>
+      <div class="confirm-modal-actions">
+        <button id="projectDeleteConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، حذف شود</button>
+        <button id="projectDeleteCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
       </div>
     </section>
   </div>

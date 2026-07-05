@@ -32,7 +32,9 @@ let historyDeleteModalState = null;
 let logoutModalState = null;
 let inputConfirmModalState = null;
 let projectFormModalState = null;
+let projectDeleteModalState = null;
 let sampleDateModalState = null;
+let upgradeModalState = null;
 const HISTORY_PAGE_SIZE = 5;
 const historyState = {
   items: [],
@@ -44,7 +46,8 @@ const historyState = {
 const projectsState = {
   items: [],
   loading: false,
-  analysisSummaryById: {}
+  analysisSummaryById: {},
+  activeProject: null
 };
 
 const persianMonthNames = [
@@ -809,6 +812,46 @@ function renderSaveStatus(message, tone = "neutral") {
   }
 }
 
+function buildUpgradeMessage(usage) {
+  const freeLimit = Number(usage?.free_limit || 0);
+  const analysisCount = Number(usage?.analysis_count || 0);
+  if (usage?.is_pro) {
+    return "حساب شما Pro است و می‌توانید بدون محدودیت به ثبت تحلیل ادامه دهید.";
+  }
+  return `تعداد تحلیل‌های ثبت‌شده شما به ${formatMixedLabel(analysisCount)} مورد رسیده است و سقف نسخه رایگان در حال حاضر ${formatMixedLabel(freeLimit)} تحلیل است. برای ادامه، نسخه Pro را فعال نمایید.`;
+}
+
+function setupUpgradeModal() {
+  if (upgradeModalState || !$("upgradeModal")) return;
+  upgradeModalState = {
+    shell: $("upgradeModal"),
+    backdrop: $("upgradeBackdrop"),
+    close: $("upgradeClose"),
+    message: $("upgradeMessage")
+  };
+
+  upgradeModalState.backdrop?.addEventListener("click", closeUpgradeModal);
+  upgradeModalState.close?.addEventListener("click", closeUpgradeModal);
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && upgradeModalState && !upgradeModalState.shell.hidden) {
+      closeUpgradeModal();
+    }
+  });
+}
+
+function openUpgradeModal(usage) {
+  setupUpgradeModal();
+  if (!upgradeModalState) return;
+  if (upgradeModalState.message) upgradeModalState.message.textContent = buildUpgradeMessage(usage || {});
+  openAnimatedModal(upgradeModalState.shell);
+}
+
+function closeUpgradeModal() {
+  if (!upgradeModalState) return;
+  closeAnimatedModal(upgradeModalState.shell);
+}
+
 async function savePendingAnalysisIfNeeded() {
   if (!sessionStorage.getItem(PENDING_ANALYSIS_KEY) || !currentAnalysisResult) return;
   if (!window.AppAuth?.isConfigured()) {
@@ -821,9 +864,15 @@ async function savePendingAnalysisIfNeeded() {
   }
 
   renderSaveStatus("در حال ثبت تحلیل در سوابق ترانسفورماتور...", "neutral");
-  const { error } = await window.AppAuth.saveAnalysis(currentAnalysisResult);
+  const { error, data, limitReached } = await window.AppAuth.saveAnalysis(currentAnalysisResult);
   if (error) {
     renderSaveStatus(`ذخیره تست انجام نشد: ${error}`, "danger");
+    return;
+  }
+
+  if (limitReached) {
+    openUpgradeModal(data);
+    renderSaveStatus("سقف نسخه رایگان شما تکمیل شده است. برای ادامه، ارتقا به Pro لازم است.", "warning");
     return;
   }
 
@@ -1055,7 +1104,22 @@ function setupInputConfirmModal() {
 
   inputConfirmModalState.backdrop?.addEventListener("click", closeInputConfirmModal);
   inputConfirmModalState.cancel?.addEventListener("click", closeInputConfirmModal);
-  inputConfirmModalState.submit?.addEventListener("click", () => {
+  inputConfirmModalState.submit?.addEventListener("click", async () => {
+    if (!inputConfirmModalState) return;
+    inputConfirmModalState.submit.disabled = true;
+    inputConfirmModalState.submit.textContent = "در حال بررسی دسترسی...";
+    const { data, error } = await window.AppAuth.getAnalysisUsageStatus();
+    if (error) {
+      inputConfirmModalState.submit.disabled = false;
+      inputConfirmModalState.submit.textContent = "بله، تحلیل شود";
+      window.AppAuth?.showToast(error, "danger");
+      return;
+    }
+    if (data?.limit_reached) {
+      closeInputConfirmModal();
+      openUpgradeModal(data);
+      return;
+    }
     closeInputConfirmModal();
     proceedToResults();
   });
@@ -1200,6 +1264,7 @@ function initEntryPage() {
   attachPersianNumericBehavior();
   setupInputConfirmModal();
   setupSampleDateModal();
+  setupUpgradeModal();
   setupEntryProjectContext();
   $("analyzeBtn")?.addEventListener("click", openInputConfirmModal);
 }
@@ -1207,6 +1272,7 @@ function initEntryPage() {
 function initResultsPage() {
   renderStoredAnalysis();
   setupInfoSheet();
+  setupUpgradeModal();
   savePendingAnalysisIfNeeded();
   document.querySelector("[data-back]")?.addEventListener("click", () => {
     if (window.history.length > 1) {
@@ -1445,11 +1511,12 @@ async function initHistoryPage() {
     const { data: project, error: projectError } = await window.AppAuth.getProject(activeHistoryProjectId);
     if (!projectError && project) {
       renderProjectDetails(project);
-    } else if (activeHistoryProjectName) {
-      const fallbackTitle = document.querySelector("[data-project-title]");
-      const fallbackHeader = document.querySelector("[data-project-header-title]");
-      if (fallbackTitle) fallbackTitle.textContent = activeHistoryProjectName;
-      if (fallbackHeader) fallbackHeader.textContent = activeHistoryProjectName;
+      const emptyCta = document.querySelector(".history-empty-cta");
+      if (emptyCta) emptyCta.href = `index.html?projectId=${encodeURIComponent(String(project.id))}`;
+    } else {
+      window.AppAuth?.showToast(projectError || "ترانسفورماتور مورد نظر دیگر در دسترس نیست.", "warning");
+      window.location.href = "projects.html";
+      return;
     }
   }
 
@@ -1462,6 +1529,8 @@ async function initHistoryPage() {
   historyState.loading = false;
   historyState.hasMore = true;
   historyState.deletingId = null;
+  setupProjectFormModal();
+  setupProjectDeleteModal();
   setupHistoryDeleteModal();
   updateLoadMoreState({ visible: true, loadingMore: false });
   container.innerHTML = `
@@ -1589,24 +1658,26 @@ function buildProjectCard(project) {
   return `
     <article class="project-card panel" role="link" tabindex="0" data-project-id="${escapeHtml(String(project.id))}" data-project-name="${escapeHtml(buildProjectOptionLabel(project))}">
       <div class="project-card-top">
-        <div class="project-card-brand" aria-hidden="true">
-          <i class="uil uil-bolt-alt"></i>
-        </div>
-        <div class="project-card-head-copy">
-          <strong class="project-card-title">${escapeHtml(project.transformer_number || "ترانس بدون عنوان")}</strong>
-          <div class="project-card-subtitle-row">
-            <div class="project-card-subtitle-meta">
-              <span class="project-card-meta-item">
-                <i class="uil uil-location-point" aria-hidden="true"></i>
-                <span>${escapeHtml(stationLabel)}</span>
-              </span>
-              <span class="project-card-meta-separator" aria-hidden="true">|</span>
-              <span class="project-card-meta-item">
-                <i class="uil uil-building" aria-hidden="true"></i>
-                <span>${escapeHtml(companyLabel)}</span>
-              </span>
+        <div class="project-card-main">
+          <div class="project-card-brand" aria-hidden="true">
+            <i class="uil uil-bolt-alt"></i>
+          </div>
+          <div class="project-card-head-copy">
+            <strong class="project-card-title">${escapeHtml(project.transformer_number || "ترانس بدون عنوان")}</strong>
+            <div class="project-card-subtitle-row">
+              <div class="project-card-subtitle-meta">
+                <span class="project-card-meta-item">
+                  <i class="uil uil-location-point" aria-hidden="true"></i>
+                  <span>${escapeHtml(stationLabel)}</span>
+                </span>
+                <span class="project-card-meta-separator" aria-hidden="true">|</span>
+                <span class="project-card-meta-item">
+                  <i class="uil uil-building" aria-hidden="true"></i>
+                  <span>${escapeHtml(companyLabel)}</span>
+                </span>
+              </div>
+              <i class="uil uil-angle-left-b project-card-entry-icon" aria-hidden="true"></i>
             </div>
-            <i class="uil uil-angle-left-b project-card-entry-icon" aria-hidden="true"></i>
           </div>
         </div>
       </div>
@@ -1633,6 +1704,7 @@ function openProjectHistory(projectId, projectName) {
 
 function renderProjectDetails(project) {
   if (!project) return;
+  projectsState.activeProject = project;
   const title = project.transformer_number || "ترانس بدون عنوان";
   const subtitle = project.station_name || "بدون نام ایستگاه";
   const headerTitle = `${title} | ${subtitle}`;
@@ -1688,11 +1760,25 @@ function renderProjectsList(items) {
 
 function resetProjectForm() {
   projectFormModalState?.form?.reset();
-  const submitButton = projectFormModalState?.submit;
-  if (submitButton) {
-    submitButton.disabled = false;
-    submitButton.textContent = "ثبت ترانسفورماتور";
-  }
+  if (!projectFormModalState) return;
+  projectFormModalState.mode = "create";
+  projectFormModalState.activeId = null;
+  projectFormModalState.title.textContent = "افزودن ترانسفورماتور جدید";
+  projectFormModalState.text.textContent = "در این بخش، مشخصات پایه ترانسفورماتور ثبت می‌شود تا ساختار سوابق تحلیلی آن ایجاد گردد.";
+  projectFormModalState.submit.disabled = false;
+  projectFormModalState.submit.textContent = "ثبت ترانسفورماتور";
+}
+
+function fillProjectForm(project) {
+  if (!projectFormModalState?.form || !project) return;
+  projectFormModalState.form.elements.companyName.value = project.company_name || "";
+  projectFormModalState.form.elements.stationName.value = project.station_name || "";
+  projectFormModalState.form.elements.transformerNumber.value = project.transformer_number || "";
+  projectFormModalState.form.elements.voltageKv.value = project.voltage_kv ?? "";
+  projectFormModalState.form.elements.capacityMva.value = project.capacity_mva ?? "";
+  projectFormModalState.form.elements.manufacturer.value = project.manufacturer || "";
+  projectFormModalState.form.elements.manufacturedYear.value = project.manufactured_year ?? "";
+  projectFormModalState.form.elements.extraNotes.value = extractProjectNotes(project);
 }
 
 function closeProjectFormModal() {
@@ -1701,9 +1787,17 @@ function closeProjectFormModal() {
   closeAnimatedModal(projectFormModalState.shell);
 }
 
-function openProjectFormModal() {
+function openProjectFormModal(project = null) {
   if (!projectFormModalState) return;
   resetProjectForm();
+  if (project) {
+    projectFormModalState.mode = "edit";
+    projectFormModalState.activeId = Number(project.id);
+    projectFormModalState.title.textContent = "ویرایش ترانسفورماتور";
+    projectFormModalState.text.textContent = "در این بخش می‌توانید مشخصات ثبت‌شده ترانسفورماتور را بروزرسانی نمایید.";
+    projectFormModalState.submit.textContent = "ذخیره تغییرات";
+    fillProjectForm(project);
+  }
   openAnimatedModal(projectFormModalState.shell);
 }
 
@@ -1714,7 +1808,11 @@ function setupProjectFormModal() {
     backdrop: $("projectFormBackdrop"),
     form: $("projectForm"),
     submit: $("projectSubmit"),
-    cancel: $("projectCancel")
+    cancel: $("projectCancel"),
+    title: $("projectFormTitle"),
+    text: $("projectFormText"),
+    mode: "create",
+    activeId: null
   };
 
   projectFormModalState.backdrop?.addEventListener("click", closeProjectFormModal);
@@ -1734,14 +1832,19 @@ function setupProjectFormModal() {
     openProjectHistory(card.dataset.projectId, card.dataset.projectName);
   });
 
+  document.querySelector("[data-project-detail-edit]")?.addEventListener("click", () => {
+    if (projectsState.activeProject) openProjectFormModal(projectsState.activeProject);
+  });
+
   projectFormModalState.form?.addEventListener("submit", async event => {
     event.preventDefault();
     if (!projectFormModalState) return;
     const formData = new FormData(projectFormModalState.form);
+    const isEdit = projectFormModalState.mode === "edit" && projectFormModalState.activeId !== null;
     projectFormModalState.submit.disabled = true;
-    projectFormModalState.submit.textContent = "در حال ثبت اطلاعات...";
+    projectFormModalState.submit.textContent = isEdit ? "در حال ذخیره..." : "در حال ثبت اطلاعات...";
 
-    const { data, error } = await window.AppAuth.createProject({
+    const payload = {
       companyName: formData.get("companyName"),
       stationName: formData.get("stationName"),
       transformerNumber: formData.get("transformerNumber"),
@@ -1750,19 +1853,31 @@ function setupProjectFormModal() {
       manufacturer: formData.get("manufacturer"),
       manufacturedYear: formData.get("manufacturedYear"),
       extraNotes: formData.get("extraNotes")
-    });
+    };
+    const { data, error } = isEdit
+      ? await window.AppAuth.updateProject(projectFormModalState.activeId, payload)
+      : await window.AppAuth.createProject(payload);
 
     if (error) {
       projectFormModalState.submit.disabled = false;
-      projectFormModalState.submit.textContent = "ثبت ترانسفورماتور";
+      projectFormModalState.submit.textContent = isEdit ? "ذخیره تغییرات" : "ثبت ترانسفورماتور";
       window.AppAuth?.showToast(error, "danger");
       return;
     }
 
-    projectsState.items.unshift(data);
+    if (isEdit) {
+      projectsState.items = projectsState.items.map(item => (
+        Number(item.id) === Number(data.id) ? data : item
+      ));
+      if (activeHistoryProjectId && Number(activeHistoryProjectId) === Number(data.id)) {
+        renderProjectDetails(data);
+      }
+    } else {
+      projectsState.items.unshift(data);
+    }
     renderProjectsList(projectsState.items);
     closeProjectFormModal();
-    window.AppAuth?.showToast("ترانسفورماتور با موفقیت اضافه شد.", "success");
+    window.AppAuth?.showToast(isEdit ? "ترانسفورماتور با موفقیت بروزرسانی شد." : "ترانسفورماتور با موفقیت اضافه شد.", "success");
   });
 
   document.addEventListener("keydown", event => {
@@ -1772,11 +1887,82 @@ function setupProjectFormModal() {
   });
 }
 
+function setupProjectDeleteModal() {
+  if (projectDeleteModalState || !$("projectDeleteModal")) return;
+  projectDeleteModalState = {
+    shell: $("projectDeleteModal"),
+    backdrop: $("projectDeleteBackdrop"),
+    confirm: $("projectDeleteConfirm"),
+    cancel: $("projectDeleteCancel"),
+    activeId: null
+  };
+
+  projectDeleteModalState.backdrop?.addEventListener("click", closeProjectDeleteModal);
+  projectDeleteModalState.cancel?.addEventListener("click", closeProjectDeleteModal);
+  projectDeleteModalState.confirm?.addEventListener("click", confirmProjectDelete);
+
+  document.querySelector("[data-project-detail-delete]")?.addEventListener("click", () => {
+    if (projectsState.activeProject?.id) openProjectDeleteModal(projectsState.activeProject.id);
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && projectDeleteModalState?.activeId !== null) {
+      closeProjectDeleteModal();
+    }
+  });
+}
+
+function openProjectDeleteModal(projectId) {
+  setupProjectDeleteModal();
+  if (!projectDeleteModalState) return;
+  projectDeleteModalState.activeId = Number(projectId);
+  projectDeleteModalState.confirm.disabled = false;
+  projectDeleteModalState.confirm.textContent = "بله، حذف شود";
+  openAnimatedModal(projectDeleteModalState.shell);
+}
+
+function closeProjectDeleteModal() {
+  if (!projectDeleteModalState) return;
+  projectDeleteModalState.activeId = null;
+  projectDeleteModalState.confirm.disabled = false;
+  projectDeleteModalState.confirm.textContent = "بله، حذف شود";
+  closeAnimatedModal(projectDeleteModalState.shell);
+}
+
+async function confirmProjectDelete() {
+  if (!projectDeleteModalState || projectDeleteModalState.activeId === null) return;
+  const projectId = Number(projectDeleteModalState.activeId);
+  projectDeleteModalState.confirm.disabled = true;
+  projectDeleteModalState.confirm.textContent = "در حال حذف...";
+
+  const { error } = await window.AppAuth.deleteProject(projectId);
+  if (error) {
+    projectDeleteModalState.confirm.disabled = false;
+    projectDeleteModalState.confirm.textContent = "بله، حذف شود";
+    window.AppAuth?.showToast(error, "danger");
+    return;
+  }
+
+  projectsState.items = projectsState.items.filter(item => Number(item.id) !== projectId);
+  delete projectsState.analysisSummaryById[projectId];
+  if (projectsState.activeProject && Number(projectsState.activeProject.id) === projectId) {
+    projectsState.activeProject = null;
+  }
+  closeProjectDeleteModal();
+  renderProjectsList(projectsState.items);
+  window.AppAuth?.showToast("ترانسفورماتور از دید کاربر حذف شد.", "success");
+
+  if (activeHistoryProjectId && activeHistoryProjectId === projectId) {
+    window.location.href = "projects.html";
+  }
+}
+
 async function initProjectsPage() {
   const list = $("projectsList");
   if (!list) return;
 
   setupProjectFormModal();
+  setupProjectDeleteModal();
   setupLogoutModal();
   projectsState.loading = true;
   list.innerHTML = `
@@ -1926,21 +2112,21 @@ async function initProfilePage() {
   projectCountNode.textContent = "—";
   analysisCountNode.textContent = "—";
 
-  const [{ data: projects, error: projectsError }, { data: analyses, error: analysesError }] = await Promise.all([
+  const [{ data: projects, error: projectsError }, { data: usage, error: usageError }] = await Promise.all([
     window.AppAuth.listProjects(),
-    window.AppAuth.listAnalyses({ limit: 1000, offset: 0 })
+    window.AppAuth.getAnalysisUsageStatus()
   ]);
 
-  if (projectsError || analysesError) {
+  if (projectsError || usageError) {
     if (projectsError) window.AppAuth?.showToast(projectsError, "warning");
-    if (analysesError) window.AppAuth?.showToast(analysesError, "warning");
+    if (usageError) window.AppAuth?.showToast(usageError, "warning");
     projectCountNode.textContent = "نامشخص";
     analysisCountNode.textContent = "نامشخص";
     return;
   }
 
   projectCountNode.textContent = formatMixedLabel((projects || []).length);
-  analysisCountNode.textContent = formatMixedLabel((analyses || []).length);
+  analysisCountNode.textContent = formatMixedLabel(Number(usage?.analysis_count || 0));
 }
 
 document.addEventListener("DOMContentLoaded", bootPage);

@@ -1,6 +1,8 @@
 (function () {
   const CONFIG = window.SUPABASE_CONFIG || {};
+  const ADMIN_MOBILES = new Set(["09366183493", "09126125786"]);
   const pageName = getPageName();
+  const routePath = getRoutePath();
   const protectedPages = new Set(["index.html", "results.html", "history.html", "projects.html", "profile.html"]);
   const authPage = "auth.html";
   const state = {
@@ -8,6 +10,7 @@
     session: null,
     user: null,
     profile: null,
+    usage: null,
     initialized: false
   };
 
@@ -15,6 +18,30 @@
     const path = window.location.pathname;
     const last = path.split("/").pop();
     return last || "index.html";
+  }
+
+  function getRoutePath() {
+    return window.location.pathname.replace(/\/+$/, "") || "/";
+  }
+
+  function isAdminPath() {
+    return routePath.endsWith("/admin") || routePath.endsWith("/admin/index.html");
+  }
+
+  function getAppRelativePath(target) {
+    return isAdminPath() ? `../${target}` : target;
+  }
+
+  function getCurrentAppPath() {
+    if (isAdminPath()) return "admin/";
+    return pageName || "index.html";
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register(getAppRelativePath("sw.js")).catch(() => {});
+    });
   }
 
   function normalizeDigits(value) {
@@ -177,7 +204,7 @@
   }
 
   function isProtectedPage() {
-    return protectedPages.has(pageName);
+    return protectedPages.has(pageName) || isAdminPath();
   }
 
   function getNextUrl() {
@@ -186,8 +213,12 @@
   }
 
   function redirectToAuth() {
-    const current = pageName || "index.html";
-    window.location.href = `auth.html?next=${encodeURIComponent(current)}`;
+    const current = getCurrentAppPath();
+    window.location.href = `${getAppRelativePath(authPage)}?next=${encodeURIComponent(current)}`;
+  }
+
+  function goToAppPath(target) {
+    window.location.href = getAppRelativePath(target);
   }
 
   async function loadProfile() {
@@ -195,7 +226,7 @@
     if (!client || !state.user) return null;
     const { data, error } = await client
       .from("profiles")
-      .select("id, mobile, first_name, last_name, company_name, created_at")
+      .select("id, mobile, first_name, last_name, company_name, analysis_count, is_pro, created_at")
       .eq("id", state.user.id)
       .maybeSingle();
 
@@ -208,16 +239,52 @@
     const isAuthed = Boolean(state.user);
     const profile = state.profile || {};
     const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "کاربر";
+    const isAdmin = isAdminProfile(profile);
     setText("[data-user-name]", fullName);
     setText("[data-user-mobile]", profile.mobile || "");
     setText("[data-company-name]", profile.company_name || "بدون نام شرکت");
     setVisibility("[data-auth-only]", isAuthed);
     setVisibility("[data-guest-only]", !isAuthed);
+    setVisibility("[data-admin-only]", isAuthed && isAdmin);
     document.body.classList.toggle("is-authenticated", isAuthed);
+  }
+
+  function isAdminProfile(profile = state.profile) {
+    return ADMIN_MOBILES.has(normalizePhone(profile?.mobile || ""));
+  }
+
+  async function getAnalysisUsageStatus() {
+    const client = createClient();
+    if (!client || !state.user) {
+      return { data: null, error: "برای ادامه، ابتدا وارد حساب کاربری شوید." };
+    }
+    const { data, error } = await client.rpc("get_analysis_usage_status");
+    const usage = Array.isArray(data) ? data[0] : data;
+    if (!error && usage) {
+      state.usage = usage;
+      if (state.profile) {
+        state.profile.analysis_count = Number(usage.analysis_count || 0);
+        state.profile.is_pro = Boolean(usage.is_pro);
+      }
+    }
+    if (!error && !usage) {
+      return { data: null, error: "پروفایل کاربری شما تکمیل نشده است." };
+    }
+    return {
+      data: usage || null,
+      error: error ? mapAuthError(error) : null
+    };
   }
 
   function mapAuthError(error) {
     const message = String(error?.message || error || "خطای ناشناخته");
+    if (message.includes("ADMIN_ONLY")) return "این عملیات فقط برای مدیر سامانه مجاز است.";
+    if (message.includes("INVALID_FREE_LIMIT")) return "مقدار محدودیت نسخه رایگان معتبر نیست.";
+    if (message.includes("USER_NOT_FOUND")) return "کاربر مورد نظر پیدا نشد.";
+    if (message.includes("PROJECT_NOT_FOUND")) return "ترانسفورماتور مورد نظر پیدا نشد یا دیگر در دسترس نیست.";
+    if (message.includes("AUTH_REQUIRED")) return "برای ادامه، ابتدا وارد حساب کاربری شوید.";
+    if (message.includes("PROFILE_NOT_FOUND")) return "پروفایل کاربری شما تکمیل نشده است.";
+    if (message.includes("FREE_LIMIT_REACHED")) return "سقف نسخه رایگان شما تکمیل شده است.";
     if (message.includes("Invalid login credentials")) return "شماره تلفن همراه یا رمز عبور واردشده صحیح نیست.";
     if (message.includes("User already registered")) return "برای این شماره تلفن همراه، حساب کاربری قبلاً ایجاد شده است.";
     if (message.includes("Password should be at least")) return "رمز عبور باید بین ۸ تا ۳۰ کاراکتر و فقط شامل حروف و اعداد انگلیسی باشد.";
@@ -367,8 +434,61 @@
     state.session = null;
     state.user = null;
     state.profile = null;
+    state.usage = null;
     syncAuthUI();
     redirectToAuth();
+  }
+
+  async function getAdminUserActivity() {
+    const client = createClient();
+    if (!client || !state.user) return { data: [], error: "برای مشاهده پنل ادمین، ابتدا وارد حساب کاربری شوید." };
+    const { data, error } = await client.rpc("get_admin_user_activity");
+    return {
+      data: Array.isArray(data) ? data : [],
+      error: error ? mapAuthError(error) : null
+    };
+  }
+
+  async function getAdminUsageSettings() {
+    const client = createClient();
+    if (!client || !state.user) return { data: null, error: "برای مشاهده تنظیمات، ابتدا وارد حساب کاربری شوید." };
+    const { data, error } = await client.rpc("get_admin_usage_settings");
+    const settings = Array.isArray(data) ? data[0] : data;
+    return {
+      data: settings || null,
+      error: error ? mapAuthError(error) : null
+    };
+  }
+
+  async function updateFreeAnalysisLimit(limit) {
+    const client = createClient();
+    if (!client || !state.user) return { data: null, error: "برای ویرایش محدودیت، ابتدا وارد حساب کاربری شوید." };
+    const parsedLimit = parseOptionalInteger(limit);
+    if (parsedLimit === null || parsedLimit < 0) {
+      return { data: null, error: "محدودیت نسخه رایگان باید یک عدد صفر یا بزرگ‌تر باشد." };
+    }
+    const { data, error } = await client.rpc("admin_set_free_analysis_limit", {
+      p_limit: parsedLimit
+    });
+    const settings = Array.isArray(data) ? data[0] : data;
+    return {
+      data: settings || null,
+      error: error ? mapAuthError(error) : null
+    };
+  }
+
+  async function setUserProStatus(userId, isPro) {
+    const client = createClient();
+    if (!client || !state.user) return { data: null, error: "برای تغییر وضعیت Pro، ابتدا وارد حساب کاربری شوید." };
+    const { data, error } = await client.rpc("admin_set_user_pro_status", {
+      p_user_id: userId,
+      p_is_pro: Boolean(isPro)
+    });
+    const result = Array.isArray(data) ? data[0] : data;
+    return {
+      data: result || null,
+      error: error ? mapAuthError(error) : null
+    };
   }
 
   async function saveAnalysis(result) {
@@ -386,8 +506,48 @@
       sampled_at: result.sampledAt || null,
       notes: result.sampleNotes || null
     };
-    const { error } = await client.from("analyses").insert(payload);
-    return { error: error ? mapAuthError(error) : null };
+    const { data, error } = await client.rpc("save_analysis_with_limit", {
+      p_project_id: payload.project_id,
+      p_input: payload.input,
+      p_result: payload.result,
+      p_final_diagnosis: payload.final_diagnosis,
+      p_confidence: payload.confidence,
+      p_tdcg: payload.tdcg,
+      p_sampled_at: payload.sampled_at,
+      p_notes: payload.notes
+    });
+    const response = Array.isArray(data) ? data[0] : data;
+    if (error) return { error: mapAuthError(error), data: response || null };
+
+    if (response) {
+      state.usage = response;
+      if (state.profile) {
+        state.profile.analysis_count = Number(response.analysis_count || 0);
+        state.profile.is_pro = Boolean(response.is_pro);
+      }
+    }
+
+    if (!response?.saved && response?.error_code === "FREE_LIMIT_REACHED") {
+      return {
+        error: null,
+        data: response,
+        limitReached: true
+      };
+    }
+
+    if (response && response.saved === false) {
+      return {
+        error: mapAuthError(response.error_code || "SAVE_FAILED"),
+        data: response,
+        limitReached: false
+      };
+    }
+
+    return {
+      error: null,
+      data: response || null,
+      limitReached: response?.error_code === "FREE_LIMIT_REACHED"
+    };
   }
 
   async function listAnalyses(options = {}) {
@@ -397,8 +557,10 @@
     const offset = Number(options.offset || 0);
     let query = client
       .from("analyses")
-      .select("id, project_id, input, result, final_diagnosis, confidence, tdcg, sampled_at, created_at")
+      .select("id, project_id, input, result, final_diagnosis, confidence, tdcg, sampled_at, created_at, projects!inner(id, archived_at, deleted_at)")
       .is("hidden_from_user_at", null)
+      .is("projects.archived_at", null)
+      .is("projects.deleted_at", null)
       .range(offset, Math.max(offset, offset + limit - 1));
     if (options.projectId) {
       query = query.eq("project_id", Number(options.projectId));
@@ -430,6 +592,7 @@
       .from("projects")
       .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
       .is("archived_at", null)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     return {
       data: data || [],
@@ -444,6 +607,8 @@
       .from("projects")
       .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
       .eq("id", Number(projectId))
+      .is("archived_at", null)
+      .is("deleted_at", null)
       .maybeSingle();
     return {
       data: data || null,
@@ -483,11 +648,35 @@
       })
       .eq("id", projectId)
       .eq("user_id", state.user.id)
+      .is("archived_at", null)
+      .is("deleted_at", null)
       .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
       .single();
     return {
       data: data || null,
       error: error ? mapAuthError(error) : null
+    };
+  }
+
+  async function deleteProject(projectId) {
+    const client = createClient();
+    if (!client || !state.user) return { error: "برای حذف ترانسفورماتور، ابتدا وارد حساب کاربری شوید." };
+    const timestamp = new Date().toISOString();
+    const { data, error } = await client
+      .from("projects")
+      .update({
+        deleted_at: timestamp,
+        updated_at: timestamp
+      })
+      .eq("id", Number(projectId))
+      .eq("user_id", state.user.id)
+      .is("archived_at", null)
+      .is("deleted_at", null)
+      .select("id")
+      .maybeSingle();
+    return {
+      data: data || null,
+      error: error ? mapAuthError(error) : (!data ? "ترانسفورماتور مورد نظر پیدا نشد یا قبلاً حذف شده است." : null)
     };
   }
 
@@ -601,6 +790,7 @@
       state.session = session || null;
       state.user = session?.user || null;
       state.profile = null;
+      state.usage = null;
       if (state.user) await loadProfile();
       syncAuthUI();
       if (!state.user && isProtectedPage()) redirectToAuth();
@@ -621,6 +811,11 @@
 
     state.initialized = true;
     syncAuthUI();
+
+    if (isAdminPath() && !isAdminProfile()) {
+      showGlobalMessage("دسترسی به پنل مدیریت فقط برای حساب کاربری مجاز امکان‌پذیر است.", "danger");
+      goToAppPath("index.html");
+    }
   }
 
   window.AppAuth = {
@@ -629,7 +824,10 @@
     isAuthenticated: () => Boolean(state.user),
     getUser: () => state.user,
     getProfile: () => state.profile,
+    getUsage: () => state.usage,
+    isAdmin: () => isAdminProfile(),
     showGlobalMessage,
+    getAnalysisUsageStatus,
     saveAnalysis,
     listAnalyses,
     hideAnalysis,
@@ -637,7 +835,14 @@
     getProject,
     createProject,
     updateProject,
+    deleteProject,
+    getAdminUserActivity,
+    getAdminUsageSettings,
+    updateFreeAnalysisLimit,
+    setUserProStatus,
     signOut,
     showToast
   };
+
+  registerServiceWorker();
 }());
