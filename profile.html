@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>پروفایل</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page results-page has-app-nav">
+    <header class="app-header app-header-results">
+      <button class="icon-button export-button" type="button" data-logout aria-label="خروج از حساب">
+        <i class="uil uil-signout"></i>
+      </button>
+      <h1>پروفایل</h1>
+      <span class="header-spacer" aria-hidden="true"></span>
+    </header>
+
+    <section class="results-stack">
+      <section class="panel account-summary profile-summary">
+        <div class="profile-avatar">
+          <i class="uil uil-user-circle"></i>
+        </div>
+        <span class="account-kicker">مشخصات کاربری</span>
+        <strong class="account-name" data-user-name></strong>
+        <div class="profile-meta-grid">
+          <p class="account-meta profile-meta-item">
+            <i class="uil uil-mobile-android"></i>
+            <span data-user-mobile></span>
+          </p>
+          <p class="account-meta profile-meta-item">
+            <i class="uil uil-building"></i>
+            <span data-company-name></span>
+          </p>
+        </div>
+      </section>
+
+      <section class="profile-stats-grid" aria-label="خلاصه فعالیت کاربر">
+        <article class="panel profile-stat-card">
+          <span class="profile-stat-label">تعداد ترانسفورماتورها</span>
+          <strong class="profile-stat-value" data-profile-project-count>۰</strong>
+        </article>
+        <article class="panel profile-stat-card">
+          <span class="profile-stat-label">تعداد تحلیل‌های ثبت‌شده</span>
+          <strong class="profile-stat-value" data-profile-analysis-count>۰</strong>
+        </article>
+      </section>
+
+      <div data-global-message hidden></div>
+
+      <section class="profile-footnote" aria-label="سازنده و مالک اثر">
+        <p><i class="uil uil-user-square"></i> طراحی و مالکیت اثر: مهندس عباس دامن‌افشان، شرکت آسان تدبیر نیرو</p>
+        <p class="guide-made">نسخه ۱.۱.۰</p>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="ناوبری اصلی">
+    <a href="index.html" class="bottom-nav-item">
+      <i class="uil uil-estate"></i>
+      <span>خانه</span>
+    </a>
+    <a href="projects.html" class="bottom-nav-item">
+      <i class="uil uil-briefcase-alt"></i>
+      <span>ترانسفورماتورها</span>
+    </a>
+    <a href="guide.html" class="bottom-nav-item">
+      <i class="uil uil-book-open"></i>
+      <span>راهنما</span>
+    </a>
+    <a href="profile.html" class="bottom-nav-item is-active" aria-current="page">
+      <i class="uil uil-user-circle"></i>
+      <span>پروفایل</span>
+    </a>
+  </nav>
+
+  <div id="logoutModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="logoutBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="logoutTitle" class="confirm-modal-title">از خروج از حساب مطمئن هستید؟</h2>
+      <p class="confirm-modal-text">پس از خروج از حساب کاربری، برای دسترسی مجدد به ترانسفورماتورها و سوابق، ورود دوباره الزامی خواهد بود.</p>
+      <div class="confirm-modal-actions">
+        <button id="logoutConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، خارج شوم</button>
+        <button id="logoutCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="diagnosisEngine.js"></script>
+  <script src="faultDefinitions.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

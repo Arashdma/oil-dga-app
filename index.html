@@ -21,7 +21,7 @@
       <div class="hero-copy">
         <span class="eyebrow">⚡ ارزیابی سریع</span>
         <h1>آنالیز گازهای محلول در روغن ترانسفورماتور</h1>
-        <p class="subtitle">مقادیر گازهای محلول را بر اساس نتایج آزمایش با دقت وارد کنید تا نتیجه تحلیل نمایش داده شود و در سوابق همان حساب ذخیره گردد.</p>
+        <p class="subtitle">ترانسفورماتور مورد نظر را انتخاب، تاریخ نمونه‌گیری را ثبت، و مقادیر گازهای محلول را وارد نمایید تا نتیجه تحلیل در سوابق همان ترانسفورماتور ذخیره شود.</p>
       </div>
     </section>
 
@@ -30,6 +30,38 @@
     <section class="layout">
       <section class="panel form-panel">
         <h2><i class="uil uil-flask"></i> ورود داده‌ها</h2>
+        <div class="grid-form form-context-grid">
+          <div class="field field-wide">
+            <span>ترانسفورماتور</span>
+            <span class="input-wrap">
+              <input id="projectSelect" type="hidden" required />
+              <div class="project-select" id="projectSelectBox">
+                <button id="projectSelectTrigger" class="project-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="projectSelectValue">در حال بارگذاری اطلاعات ترانسفورماتورها...</span>
+                  <i class="uil uil-angle-down"></i>
+                </button>
+                <div id="projectSelectDropdown" class="project-select-dropdown" hidden>
+                  <div class="project-select-search-wrap">
+                    <i class="uil uil-search"></i>
+                    <input id="projectSearchInput" class="project-select-search" type="text" placeholder="جست‌وجو در ترانس، ایستگاه یا شرکت" autocomplete="off" />
+                  </div>
+                  <div id="projectSelectOptions" class="project-select-options" role="listbox" aria-label="لیست ترانسفورماتورها"></div>
+                </div>
+              </div>
+            </span>
+          </div>
+          <label class="field field-wide">
+            <span>تاریخ نمونه‌گیری</span>
+            <span class="input-wrap sampled-date-trigger-wrap">
+              <button id="sampledAtTrigger" class="sampled-date-trigger" type="button" aria-haspopup="dialog" aria-expanded="false">
+                <span id="sampledAtDisplay">تاریخ نمونه‌گیری انتخاب نشده است</span>
+                <i class="uil uil-calendar-alt"></i>
+              </button>
+              <input id="sampledAt" type="hidden" required />
+            </span>
+          </label>
+        </div>
+        <p id="projectSelectHelper" class="form-helper">برای ثبت سوابق، ترانسفورماتور مربوطه را انتخاب فرمایید.</p>
         <div class="grid-form">
           <label class="field"><span>H2</span><span class="input-wrap"><input id="H2" type="text" inputmode="numeric" value="۳۰۷" /><small>ppm</small></span></label>
           <label class="field"><span>CH4</span><span class="input-wrap"><input id="CH4" type="text" inputmode="numeric" value="۶۵۳" /><small>ppm</small></span></label>
@@ -39,7 +71,7 @@
           <label class="field"><span>CO</span><span class="input-wrap"><input id="CO" type="text" inputmode="numeric" value="۱۵۵۷" /><small>ppm</small></span></label>
           <label class="field field-wide"><span>CO2</span><span class="input-wrap"><input id="CO2" type="text" inputmode="numeric" value="۱۰۷۲۳" /><small>ppm</small></span></label>
         </div>
-        <button id="analyzeBtn" class="primary form-submit"><i class="uil uil-chart-pie-alt"></i> بررسی و تحلیل</button>
+        <button id="analyzeBtn" class="primary form-submit">بررسی و تحلیل</button>
       </section>
     </section>
   </main>
@@ -49,15 +81,71 @@
       <i class="uil uil-estate"></i>
       <span>خانه</span>
     </a>
+    <a href="projects.html" class="bottom-nav-item">
+      <i class="uil uil-briefcase-alt"></i>
+      <span>ترانسفورماتورها</span>
+    </a>
     <a href="guide.html" class="bottom-nav-item">
       <i class="uil uil-book-open"></i>
       <span>راهنما</span>
     </a>
-    <a href="history.html" class="bottom-nav-item">
-      <i class="uil uil-user"></i>
+    <a href="profile.html" class="bottom-nav-item">
+      <i class="uil uil-user-circle"></i>
       <span>پروفایل</span>
     </a>
   </nav>
+
+  <div id="inputConfirmModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="inputConfirmBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="confirm-sheet input-confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="inputConfirmTitle">
+      <div class="sheet-handle-wrap">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="inputConfirmTitle" class="confirm-modal-title">این‌ها داده‌های ورودی هستند</h2>
+      <p class="confirm-modal-text">خواهشمند است مقادیر ثبت‌شده را مجدداً بررسی فرمایید. آیا انجام تحلیل نهایی مورد تأیید است؟</p>
+      <div id="inputConfirmList" class="input-confirm-list"></div>
+      <div class="confirm-modal-actions">
+        <button id="inputConfirmSubmit" class="button-link call-button confirm-modal-button" type="button">بله، تحلیل شود</button>
+        <button id="inputConfirmCancel" class="compact-link confirm-modal-button" type="button">بازگشت به فرم</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="sampleDateModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="sampleDateBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet sample-date-sheet" role="dialog" aria-modal="true" aria-labelledby="sampleDateTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="sampleDateTitle" class="confirm-modal-title">انتخاب تاریخ نمونه‌گیری</h2>
+      <p class="confirm-modal-text">در این بخش فقط تاریخ نمونه‌گیری ثبت می‌شود و زمان در سوابق ذخیره نخواهد شد.</p>
+      <div class="sample-date-picker">
+        <div class="sample-date-picker-header">
+          <button id="sampleDatePrev" class="icon-button sample-date-nav" type="button" aria-label="ماه قبل">
+            <i class="uil uil-angle-right-b"></i>
+          </button>
+          <strong id="sampleDateMonthLabel" class="sample-date-month-label"></strong>
+          <button id="sampleDateNext" class="icon-button sample-date-nav" type="button" aria-label="ماه بعد">
+            <i class="uil uil-angle-left-b"></i>
+          </button>
+        </div>
+        <div class="sample-date-weekdays" aria-hidden="true">
+          <span>ش</span>
+          <span>ی</span>
+          <span>د</span>
+          <span>س</span>
+          <span>چ</span>
+          <span>پ</span>
+          <span>ج</span>
+        </div>
+        <div id="sampleDateGrid" class="sample-date-grid"></div>
+      </div>
+      <div class="confirm-modal-actions">
+        <button id="sampleDateConfirm" class="button-link confirm-modal-button" type="button">تایید تاریخ</button>
+        <button id="sampleDateCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
+    </section>
+  </div>
 
   <script src="diagnosisEngine.js"></script>
   <script src="faultDefinitions.js"></script>

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ترانسفورماتورها</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page results-page has-app-nav">
+    <header class="app-header app-header-results">
+      <h1>ترانسفورماتورها</h1>
+    </header>
+
+    <section class="results-stack">
+      <div data-global-message hidden></div>
+
+      <section class="section-heading projects-heading">
+        <div>
+          <h2>لیست ترانسفورماتورها</h2>
+        </div>
+        <button id="projectAddButton" class="compact-link projects-add-button" type="button">
+          <i class="uil uil-plus"></i>
+          <span>ترانسفورماتور جدید</span>
+        </button>
+      </section>
+
+      <section id="projectsEmpty" class="panel empty-state projects-empty-state" hidden>
+        <div class="projects-empty-icon" aria-hidden="true">
+          <i class="uil uil-briefcase-alt"></i>
+        </div>
+        <span class="projects-empty-kicker">شروع ساختار ترانسفورماتورها</span>
+        <h2>هنوز ترانسفورماتوری ثبت نشده است</h2>
+        <p>برای آغاز ثبت سوابق، نخستین ترانسفورماتور را تعریف نمایید.</p>
+        <button class="button-link" type="button" id="projectEmptyCta">ثبت ترانسفورماتور</button>
+      </section>
+
+      <section id="projectsList" class="history-stack projects-grid"></section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="ناوبری اصلی">
+    <a href="index.html" class="bottom-nav-item">
+      <i class="uil uil-estate"></i>
+      <span>خانه</span>
+    </a>
+    <a href="projects.html" class="bottom-nav-item is-active" aria-current="page">
+      <i class="uil uil-briefcase-alt"></i>
+      <span>ترانسفورماتورها</span>
+    </a>
+    <a href="guide.html" class="bottom-nav-item">
+      <i class="uil uil-book-open"></i>
+      <span>راهنما</span>
+    </a>
+    <a href="profile.html" class="bottom-nav-item">
+      <i class="uil uil-user-circle"></i>
+      <span>پروفایل</span>
+    </a>
+  </nav>
+
+  <div id="projectFormModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="projectFormBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet project-form-sheet" role="dialog" aria-modal="true" aria-labelledby="projectFormTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="projectFormTitle" class="confirm-modal-title">افزودن ترانسفورماتور جدید</h2>
+      <p class="confirm-modal-text">در این بخش، مشخصات پایه ترانسفورماتور ثبت می‌شود تا ساختار سوابق تحلیلی آن ایجاد گردد.</p>
+      <form id="projectForm" class="project-form">
+        <div class="grid-form auth-grid">
+          <label class="field">
+            <span>نام شرکت</span>
+            <span class="input-wrap"><input name="companyName" type="text" placeholder="مثلاً شرکت برق منطقه‌ای ..." required /></span>
+          </label>
+          <label class="field">
+            <span>نام ایستگاه برق</span>
+            <span class="input-wrap"><input name="stationName" type="text" placeholder="مثلاً پست غرب" required /></span>
+          </label>
+          <label class="field field-wide">
+            <span>شماره ترانسفورماتور</span>
+            <span class="input-wrap"><input name="transformerNumber" type="text" placeholder="مثلاً TR-201" required /></span>
+          </label>
+          <label class="field">
+            <span>سطح ولتاژ (کیلوولت)</span>
+            <span class="input-wrap"><input name="voltageKv" type="text" inputmode="decimal" placeholder="مثلاً 230" /></span>
+          </label>
+          <label class="field">
+            <span>ظرفیت (مگاولت‌آمپر)</span>
+            <span class="input-wrap"><input name="capacityMva" type="text" inputmode="decimal" placeholder="مثلاً 160" /></span>
+          </label>
+          <label class="field">
+            <span>کارخانه سازنده</span>
+            <span class="input-wrap"><input name="manufacturer" type="text" placeholder="مثلاً ایران ترانسفو" /></span>
+          </label>
+          <label class="field">
+            <span>سال ساخت</span>
+            <span class="input-wrap"><input name="manufacturedYear" type="text" inputmode="numeric" placeholder="مثلاً 1398" /></span>
+          </label>
+          <label class="field field-wide">
+            <span>مشخصات تکمیلی</span>
+            <span class="input-wrap">
+              <textarea name="extraNotes" rows="3" placeholder="سایر توضیحات یا مشخصات تکمیلی مورد نیاز را در این بخش ثبت نمایید."></textarea>
+            </span>
+          </label>
+        </div>
+        <div class="confirm-modal-actions">
+          <button id="projectSubmit" class="button-link confirm-modal-button" type="submit">ثبت ترانسفورماتور</button>
+          <button id="projectCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="logoutModal" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="logoutBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="logoutTitle" class="confirm-modal-title">از خروج از حساب مطمئن هستید؟</h2>
+      <p class="confirm-modal-text">پس از خروج از حساب کاربری، برای دسترسی مجدد به ترانسفورماتورها و سوابق، ورود دوباره الزامی خواهد بود.</p>
+      <div class="confirm-modal-actions">
+        <button id="logoutConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، خارج شوم</button>
+        <button id="logoutCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="diagnosisEngine.js"></script>
+  <script src="faultDefinitions.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

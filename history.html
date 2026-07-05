@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>پروفایل</title>
+  <title>جزئیات ترانسفورماتور</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -14,48 +14,80 @@
 <body>
   <main class="page results-page has-app-nav">
     <header class="app-header app-header-results">
-      <button class="icon-button export-button" type="button" data-logout aria-label="خروج از حساب">
-        <i class="uil uil-signout"></i>
+      <button class="icon-button back-button" type="button" data-project-back aria-label="بازگشت به ترانسفورماتورها">
+        <span>‹</span>
       </button>
-      <h1>پروفایل</h1>
+      <h1 data-project-header-title>جزئیات ترانسفورماتور</h1>
       <span class="header-spacer" aria-hidden="true"></span>
     </header>
 
     <section class="results-stack">
-      <section class="panel account-summary profile-summary">
-        <div class="profile-avatar">
-          <i class="uil uil-user-circle"></i>
+      <section class="panel project-details-panel">
+        <div class="project-details-head">
+          <div>
+            <span class="account-kicker">مشخصات ترانسفورماتور</span>
+            <strong class="project-details-title" data-project-title>در حال بارگذاری اطلاعات...</strong>
+            <p class="project-details-subtitle" data-project-subtitle></p>
+          </div>
         </div>
-        <span class="account-kicker">پروفایل شما</span>
-        <strong class="account-name" data-user-name></strong>
-        <div class="profile-meta-grid">
-          <p class="account-meta profile-meta-item">
-            <i class="uil uil-mobile-android"></i>
-            <span data-user-mobile></span>
-          </p>
-          <p class="account-meta profile-meta-item">
-            <i class="uil uil-building"></i>
-            <span data-company-name></span>
-          </p>
+        <div class="project-details-grid">
+          <div class="project-detail-row">
+            <span class="project-detail-label">شرکت</span>
+            <strong class="project-detail-value" data-detail-company>نامشخص</strong>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">ایستگاه</span>
+            <strong class="project-detail-value" data-detail-station>نامشخص</strong>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">شماره ترانس</span>
+            <strong class="project-detail-value" data-detail-transformer>نامشخص</strong>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">ولتاژ</span>
+            <strong class="project-detail-value" data-detail-voltage>نامشخص</strong>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">ظرفیت</span>
+            <strong class="project-detail-value" data-detail-capacity>نامشخص</strong>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">سازنده</span>
+            <strong class="project-detail-value" data-detail-manufacturer>نامشخص</strong>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">سال ساخت</span>
+            <strong class="project-detail-value" data-detail-year>نامشخص</strong>
+          </div>
         </div>
       </section>
 
       <div data-global-message hidden></div>
 
       <section class="section-heading profile-history-heading">
-        <h2>سوابق شما</h2>
+        <div>
+          <h2 data-history-title>لیست تحلیل‌ها</h2>
+          <p class="form-helper" data-history-subtitle>سوابق تحلیل‌های ثبت‌شده برای این ترانسفورماتور در این بخش قابل مشاهده است.</p>
+        </div>
       </section>
 
-      <section id="historyEmpty" class="panel empty-state" hidden>
-        <h2>هنوز تستی ثبت نشده</h2>
-        <p>بعد از اولین تحلیل، رکورد آن اینجا می‌آید.</p>
-        <a href="index.html" class="button-link">ثبت اولین تست</a>
+      <section id="historyEmpty" class="panel empty-state history-empty-state" hidden>
+        <div class="history-empty-icon" aria-hidden="true">
+          <i class="uil uil-flask"></i>
+        </div>
+        <span class="history-empty-kicker">سوابق تحلیل</span>
+        <h2 data-history-empty-title>هنوز تحلیلی ثبت نشده است</h2>
+        <p data-history-empty-text>برای این ترانسفورماتور هنوز سابقه‌ای ثبت نشده است.</p>
+        <a href="index.html" class="button-link history-empty-cta">
+          <i class="uil uil-plus"></i>
+          <span>ثبت نخستین تحلیل</span>
+        </a>
       </section>
 
       <section id="historyList" class="history-stack"></section>
       <div id="historyLoadMore" class="history-load-more" aria-hidden="true">
         <div id="historyLoadMoreText" class="history-loading history-loading-more" hidden>
-          <span>در حال بارگذاری سوابق بیشتر</span>
+          <span>در حال بارگذاری سوابق</span>
           <span class="loading-dots" aria-hidden="true">
             <span></span>
             <span></span>
@@ -63,11 +95,6 @@
           </span>
         </div>
       </div>
-
-      <section class="profile-footnote" aria-label="سازنده و مالک اثر">
-        <p><i class="uil uil-user-square"></i> طراحی و مالکیت اثر: مهندس عباس دامن‌افشان، شرکت آسان تدبیر نیرو</p>
-        <p class="guide-made">نسخه ۱.۱.۰</p>
-      </section>
     </section>
   </main>
 
@@ -76,12 +103,16 @@
       <i class="uil uil-estate"></i>
       <span>خانه</span>
     </a>
+    <a href="projects.html" class="bottom-nav-item">
+      <i class="uil uil-briefcase-alt"></i>
+      <span>ترانسفورماتورها</span>
+    </a>
     <a href="guide.html" class="bottom-nav-item">
       <i class="uil uil-book-open"></i>
       <span>راهنما</span>
     </a>
-    <a href="history.html" class="bottom-nav-item is-active" aria-current="page">
-      <i class="uil uil-user"></i>
+    <a href="profile.html" class="bottom-nav-item">
+      <i class="uil uil-user-circle"></i>
       <span>پروفایل</span>
     </a>
   </nav>
@@ -92,26 +123,11 @@
       <div class="sheet-handle-wrap" aria-hidden="true">
         <span class="sheet-handle"></span>
       </div>
-      <h2 id="historyDeleteTitle" class="confirm-modal-title">از حذف این سابقه مطمئن هستید؟</h2>
-      <p class="confirm-modal-text">با انجام این کار، نتیجه‌های این تست دیگر در دسترس شما قرار نخواهد گرفت.</p>
+      <h2 id="historyDeleteTitle" class="confirm-modal-title">آیا از حذف این سابقه اطمینان دارید؟</h2>
+      <p class="confirm-modal-text">با انجام این عملیات، نتایج این تحلیل دیگر در دسترس نخواهد بود.</p>
       <div class="confirm-modal-actions">
         <button id="historyDeleteConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، حذف شود</button>
         <button id="historyDeleteCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
-      </div>
-    </section>
-  </div>
-
-  <div id="logoutModal" class="sheet-shell" aria-hidden="true" hidden>
-    <button id="logoutBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
-    <section class="info-sheet confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
-      <div class="sheet-handle-wrap" aria-hidden="true">
-        <span class="sheet-handle"></span>
-      </div>
-      <h2 id="logoutTitle" class="confirm-modal-title">از خروج از حساب مطمئن هستید؟</h2>
-      <p class="confirm-modal-text">با خروج از حساب، برای دیدن سوابق و ثبت تحلیل‌های جدید باید دوباره وارد شوید.</p>
-      <div class="confirm-modal-actions">
-        <button id="logoutConfirm" class="button-link button-danger confirm-modal-button" type="button">بله، خارج شوم</button>
-        <button id="logoutCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
       </div>
     </section>
   </div>

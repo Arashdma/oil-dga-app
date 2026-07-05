@@ -1,7 +1,7 @@
 (function () {
   const CONFIG = window.SUPABASE_CONFIG || {};
   const pageName = getPageName();
-  const protectedPages = new Set(["index.html", "results.html", "history.html"]);
+  const protectedPages = new Set(["index.html", "results.html", "history.html", "projects.html", "profile.html"]);
   const authPage = "auth.html";
   const state = {
     client: null,
@@ -218,11 +218,57 @@
 
   function mapAuthError(error) {
     const message = String(error?.message || error || "خطای ناشناخته");
-    if (message.includes("Invalid login credentials")) return "شماره موبایل یا رمز عبور درست نیست.";
-    if (message.includes("User already registered")) return "برای این شماره قبلاً حساب ساخته شده است.";
+    if (message.includes("Invalid login credentials")) return "شماره تلفن همراه یا رمز عبور واردشده صحیح نیست.";
+    if (message.includes("User already registered")) return "برای این شماره تلفن همراه، حساب کاربری قبلاً ایجاد شده است.";
     if (message.includes("Password should be at least")) return "رمز عبور باید بین ۸ تا ۳۰ کاراکتر و فقط شامل حروف و اعداد انگلیسی باشد.";
-    if (message.includes("duplicate key value")) return "این شماره موبایل قبلاً ثبت شده است.";
+    if (message.includes("duplicate key value")) return "این شماره تلفن همراه قبلاً ثبت شده است.";
     return message;
+  }
+
+  function parseOptionalNumber(value) {
+    const raw = normalizeDigits(String(value ?? "")).trim();
+    if (!raw) return null;
+    const normalized = raw.replace(/,/g, "").replace(/[^\d.-]/g, "");
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function parseOptionalInteger(value) {
+    const parsed = parseOptionalNumber(value);
+    if (parsed === null) return null;
+    return Math.trunc(parsed);
+  }
+
+  function normalizeProjectPayload(payload) {
+    const companyName = String(payload.companyName || "").trim();
+    const stationName = String(payload.stationName || "").trim();
+    const transformerNumber = String(payload.transformerNumber || "").trim();
+    const manufacturer = String(payload.manufacturer || "").trim();
+    const extraNotes = String(payload.extraNotes || "").trim();
+
+    if (!companyName) return { error: "نام شرکت را وارد نمایید." };
+    if (!stationName) return { error: "نام ایستگاه برق را وارد نمایید." };
+    if (!transformerNumber) return { error: "شماره ترانسفورماتور را وارد نمایید." };
+
+    const manufacturedYear = parseOptionalInteger(payload.manufacturedYear);
+    if (String(payload.manufacturedYear || "").trim() && manufacturedYear === null) {
+      return { error: "سال ساخت را به‌صورت عددی وارد نمایید." };
+    }
+
+    return {
+      error: null,
+      data: {
+        company_name: companyName,
+        station_name: stationName,
+        transformer_number: transformerNumber,
+        voltage_kv: parseOptionalNumber(payload.voltageKv),
+        capacity_mva: parseOptionalNumber(payload.capacityMva),
+        manufacturer: manufacturer || null,
+        manufactured_year: manufacturedYear,
+        extra_attributes: extraNotes ? { notes: extraNotes } : {}
+      }
+    };
   }
 
   async function upsertProfile(userId, payload) {
@@ -264,9 +310,14 @@
   async function signUpWithPhoneProfile(formData) {
     const client = createClient();
     if (!client) return { error: "تنظیمات Supabase هنوز کامل نشده است." };
+    const firstName = String(formData.firstName || "").trim();
+    if (!firstName) return { error: "نام را وارد نمایید." };
+    const lastName = String(formData.lastName || "").trim();
+    if (!lastName) return { error: "نام خانوادگی را وارد نمایید." };
     const normalizedPhone = normalizePhone(formData.mobile);
-    if (normalizedPhone.length !== 11) return { error: "شماره موبایل را کامل وارد کن." };
+    if (normalizedPhone.length !== 11) return { error: "شماره تلفن همراه را به‌صورت کامل وارد نمایید." };
     const sanitizedPassword = sanitizePassword(formData.password);
+    if (!sanitizedPassword) return { error: "رمز عبور را وارد نمایید." };
     if (!isValidPassword(sanitizedPassword)) {
       return { error: "رمز عبور باید بین ۸ تا ۳۰ کاراکتر و فقط شامل حروف و اعداد انگلیسی باشد." };
     }
@@ -277,8 +328,8 @@
       options: {
         data: {
           mobile: normalizedPhone,
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
+          first_name: firstName,
+          last_name: lastName,
           company_name: formData.companyName.trim()
         }
       }
@@ -287,13 +338,13 @@
     if (error) return { error: mapAuthError(error) };
 
     if (!data.user?.id) {
-      return { error: "ثبت نام کامل نشد. تنظیمات احراز هویت را بررسی کن." };
+      return { error: "فرآیند ثبت‌نام تکمیل نشد. تنظیمات احراز هویت را بررسی نمایید." };
     }
 
     const profileResult = await upsertProfile(data.user.id, {
       mobile: normalizedPhone,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
+      firstName,
+      lastName,
       companyName: formData.companyName
     });
     if (profileResult.error) return profileResult;
@@ -322,14 +373,18 @@
 
   async function saveAnalysis(result) {
     const client = createClient();
-    if (!client || !state.user) return { error: "برای ذخیره تست باید وارد حساب شوید." };
+    if (!client || !state.user) return { error: "برای ذخیره‌سازی تحلیل، ابتدا وارد حساب کاربری شوید." };
+    const projectId = Number(result?.projectId || 0);
+    if (!projectId) return { error: "ترانسفورماتور مربوط به این تحلیل مشخص نشده است." };
     const payload = {
-      user_id: state.user.id,
+      project_id: projectId,
       input: result.input,
       result,
       final_diagnosis: result.finalDiagnosis,
       confidence: result.confidence,
-      tdcg: result.tdcg
+      tdcg: result.tdcg,
+      sampled_at: result.sampledAt || null,
+      notes: result.sampleNotes || null
     };
     const { error } = await client.from("analyses").insert(payload);
     return { error: error ? mapAuthError(error) : null };
@@ -337,15 +392,18 @@
 
   async function listAnalyses(options = {}) {
     const client = createClient();
-    if (!client || !state.user) return { data: [], error: "برای مشاهده سوابق باید وارد حساب شوید." };
+    if (!client || !state.user) return { data: [], error: "برای مشاهده سوابق، ابتدا وارد حساب کاربری شوید." };
     const limit = Number(options.limit || 20);
     const offset = Number(options.offset || 0);
-    const { data, error } = await client
+    let query = client
       .from("analyses")
-      .select("id, input, result, final_diagnosis, confidence, tdcg, created_at")
+      .select("id, project_id, input, result, final_diagnosis, confidence, tdcg, sampled_at, created_at")
       .is("hidden_from_user_at", null)
-      .range(offset, Math.max(offset, offset + limit - 1))
-      .order("created_at", { ascending: false });
+      .range(offset, Math.max(offset, offset + limit - 1));
+    if (options.projectId) {
+      query = query.eq("project_id", Number(options.projectId));
+    }
+    const { data, error } = await query.order("sampled_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false });
     return {
       data: data || [],
       error: error ? mapAuthError(error) : null
@@ -354,7 +412,7 @@
 
   async function hideAnalysis(analysisId) {
     const client = createClient();
-    if (!client || !state.user) return { error: "برای حذف سابقه باید وارد حساب شوید." };
+    if (!client || !state.user) return { error: "برای حذف سابقه، ابتدا وارد حساب کاربری شوید." };
     const { error } = await client
       .from("analyses")
       .update({ hidden_from_user_at: new Date().toISOString() })
@@ -363,6 +421,74 @@
       .is("hidden_from_user_at", null);
 
     return { error: error ? mapAuthError(error) : null };
+  }
+
+  async function listProjects() {
+    const client = createClient();
+    if (!client || !state.user) return { data: [], error: "برای مشاهده ترانسفورماتورها، ابتدا وارد حساب کاربری شوید." };
+    const { data, error } = await client
+      .from("projects")
+      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .is("archived_at", null)
+      .order("created_at", { ascending: false });
+    return {
+      data: data || [],
+      error: error ? mapAuthError(error) : null
+    };
+  }
+
+  async function getProject(projectId) {
+    const client = createClient();
+    if (!client || !state.user) return { data: null, error: "برای مشاهده جزئیات ترانسفورماتور، ابتدا وارد حساب کاربری شوید." };
+    const { data, error } = await client
+      .from("projects")
+      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .eq("id", Number(projectId))
+      .maybeSingle();
+    return {
+      data: data || null,
+      error: error ? mapAuthError(error) : null
+    };
+  }
+
+  async function createProject(payload) {
+    const client = createClient();
+    if (!client || !state.user) return { error: "برای ثبت ترانسفورماتور، ابتدا وارد حساب کاربری شوید." };
+    const normalized = normalizeProjectPayload(payload);
+    if (normalized.error) return { error: normalized.error };
+    const { data, error } = await client
+      .from("projects")
+      .insert({
+        ...normalized.data,
+        updated_at: new Date().toISOString()
+      })
+      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .single();
+    return {
+      data: data || null,
+      error: error ? mapAuthError(error) : null
+    };
+  }
+
+  async function updateProject(projectId, payload) {
+    const client = createClient();
+    if (!client || !state.user) return { error: "برای ویرایش ترانسفورماتور، ابتدا وارد حساب کاربری شوید." };
+    const normalized = normalizeProjectPayload(payload);
+    if (normalized.error) return { error: normalized.error };
+    const { data, error } = await client
+      .from("projects")
+      .update({
+        ...normalized.data,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", projectId)
+      .eq("user_id", state.user.id)
+      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .single();
+    return {
+      data: data || null,
+      error: error ? mapAuthError(error) : null
+    };
   }
 
   function bindAuthForms() {
@@ -382,7 +508,7 @@
       const passwordInput = formElement.querySelector('input[name="password"]');
       if (passwordInput) passwordInput.value = sanitizePassword(passwordInput.value);
       const form = new FormData(formElement);
-      setFormMessage("loginMessage", "در حال ورود...", "neutral");
+      setFormMessage("loginMessage", "در حال ورود به سامانه...", "neutral");
       const { error } = await signInWithPhonePassword(form.get("mobile"), form.get("password"));
       if (error) {
         setFormMessage("loginMessage", error, "danger");
@@ -406,10 +532,10 @@
         return;
       }
       if (password !== confirmPassword) {
-        setFormMessage("registerMessage", "تکرار رمز عبور با رمز اصلی یکی نیست.", "danger");
+        setFormMessage("registerMessage", "رمز عبور و تکرار آن یکسان نیست.", "danger");
         return;
       }
-      setFormMessage("registerMessage", "در حال ثبت نام...", "neutral");
+      setFormMessage("registerMessage", "در حال ثبت‌نام...", "neutral");
       const { error } = await signUpWithPhoneProfile({
         mobile: form.get("mobile"),
         firstName: String(form.get("firstName") || ""),
@@ -421,7 +547,7 @@
         setFormMessage("registerMessage", error, "danger");
         return;
       }
-      setFormMessage("registerMessage", "حساب شما ساخته شد و الان وارد شدید.", "success");
+      setFormMessage("registerMessage", "حساب کاربری با موفقیت ایجاد شد و ورود انجام شد.", "success");
       window.location.href = getNextUrl();
     });
 
@@ -458,7 +584,7 @@
 
   async function boot() {
     if (!isConfigured()) {
-      showGlobalMessage("برای فعال شدن لاگین و ذخیره سوابق، فایل supabase-config.js را با URL و ANON KEY پروژه کامل کن.", "warning");
+      showGlobalMessage("برای فعال‌سازی ورود و ذخیره سوابق، فایل supabase-config.js را با URL و ANON KEY پروژه تکمیل نمایید.", "warning");
       if (pageName === authPage) bindAuthForms();
       state.initialized = true;
       syncAuthUI();
@@ -507,6 +633,10 @@
     saveAnalysis,
     listAnalyses,
     hideAnalysis,
+    listProjects,
+    getProject,
+    createProject,
+    updateProject,
     signOut,
     showToast
   };

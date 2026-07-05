@@ -36,11 +36,11 @@
       <section data-auth-panel="login" class="auth-panel">
         <form id="loginForm" class="auth-form">
           <label class="field">
-            <span>شماره موبایل</span>
+            <span>شماره موبایل <span class="required-mark" aria-hidden="true">*</span></span>
             <span class="input-wrap"><input name="mobile" type="tel" inputmode="numeric" placeholder="۰۹۱۲..." required /></span>
           </label>
           <label class="field">
-            <span>رمز عبور</span>
+            <span>رمز عبور <span class="required-mark" aria-hidden="true">*</span></span>
             <span class="input-wrap input-wrap-password">
               <input name="password" type="password" placeholder="۸ تا ۳۰ کاراکتر" minlength="8" maxlength="30" pattern="[A-Za-z0-9]{8,30}" inputmode="latin" autocapitalize="off" autocomplete="current-password" data-password-input required />
               <button class="password-toggle" type="button" data-password-toggle aria-label="نمایش رمز عبور" aria-pressed="false">
@@ -57,11 +57,11 @@
         <form id="registerForm" class="auth-form">
           <div class="grid-form auth-grid">
             <label class="field">
-              <span>نام</span>
+              <span>نام <span class="required-mark" aria-hidden="true">*</span></span>
               <span class="input-wrap"><input name="firstName" type="text" placeholder="نام" required /></span>
             </label>
             <label class="field">
-              <span>نام خانوادگی</span>
+              <span>نام خانوادگی <span class="required-mark" aria-hidden="true">*</span></span>
               <span class="input-wrap"><input name="lastName" type="text" placeholder="نام خانوادگی" required /></span>
             </label>
             <label class="field field-wide">
@@ -69,11 +69,11 @@
               <span class="input-wrap"><input name="companyName" type="text" placeholder="مثلاً شرکت برق ..." required /></span>
             </label>
             <label class="field field-wide">
-              <span>شماره موبایل</span>
+              <span>شماره موبایل <span class="required-mark" aria-hidden="true">*</span></span>
               <span class="input-wrap"><input name="mobile" type="tel" inputmode="numeric" placeholder="۰۹۱۲..." required /></span>
             </label>
             <label class="field field-wide">
-              <span>رمز عبور</span>
+              <span>رمز عبور <span class="required-mark" aria-hidden="true">*</span></span>
               <span class="input-wrap input-wrap-password">
                 <input name="password" type="password" placeholder="فقط حروف و عدد انگلیسی" minlength="8" maxlength="30" pattern="[A-Za-z0-9]{8,30}" inputmode="latin" autocapitalize="off" autocomplete="new-password" data-password-input required />
                 <button class="password-toggle" type="button" data-password-toggle aria-label="نمایش رمز عبور" aria-pressed="false">

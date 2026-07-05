@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>راهنمای تحلیل و درباره اپ</title>
+  <title>راهنمای تحلیل و معرفی سامانه</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -18,9 +18,9 @@
     </header>
 
     <section class="guide-hero">
-      <span class="eyebrow">راهنما</span>
-      <h2>منطق تحلیل این اپ چگونه کار می‌کند؟</h2>
-      <p>این اپ برای ارزیابی اولیه نتایج DGA طراحی شده و چند روش تشخیصی را کنار هم قرار می‌دهد تا یک جمع‌بندی سریع و قابل پیگیری به شما بدهد.</p>
+      <span class="eyebrow">راهنمای سامانه</span>
+      <h2>منطق تحلیل در این سامانه چگونه عمل می‌کند؟</h2>
+      <p>این سامانه برای ارزیابی اولیه نتایج DGA طراحی شده است و با تجمیع چند روش تشخیصی، جمع‌بندی اولیه‌ای قابل استناد برای بررسی‌های تخصصی ارائه می‌دهد.</p>
     </section>
 
     <div data-global-message hidden></div>
@@ -28,22 +28,39 @@
     <section class="guide-stack">
       <article class="panel guide-card">
         <h2><i class="uil uil-flask"></i> ورودی‌های مورد استفاده</h2>
-        <p>اپ مقادیر H2، CH4، C2H2، C2H4، C2H6، CO و CO2 را دریافت می‌کند و از روی نسبت گازها، TDCG و الگوهای نسبی، خروجی روش‌های مختلف را می‌سازد.</p>
+        <p>سامانه مقادیر H2، CH4، C2H2، C2H4، C2H6، CO و CO2 را دریافت کرده و بر مبنای نسبت گازها، شاخص TDCG و الگوهای نسبی، نتایج روش‌های مختلف را محاسبه می‌کند.</p>
       </article>
 
       <article class="panel guide-card">
         <h2><i class="uil uil-chart-growth"></i> روش‌های تشخیص</h2>
-        <p>در این نسخه، روش‌های IEEE، IEC، Rogers، Doernenberg، Duval و POTG به‌صورت سبک و تصمیم‌یار پیاده‌سازی شده‌اند تا برای بررسی سریع قابل استفاده باشند.</p>
+        <p>در این نسخه، روش‌های IEEE، IEC، Rogers، Doernenberg، Duval، POTG و HEPTAGON به‌صورت هم‌زمان در اختیار کاربر قرار گرفته‌اند تا ارزیابی اولیه با دقت و پوشش بیشتری انجام شود.</p>
+        <p>در روش‌های IEC، Rogers و POTG، نمایش تحلیل اصلی منوط به عبور حداقل یکی از گازهای ورودی از سطح یک جدول IEEE (L1) است.</p>
+        <p>روش HEPTAGON از هر هفت گاز اصلی استفاده می‌کند و علاوه بر نواحی خطای حرارتی و الکتریکی، قابلیت شناسایی نواحی مرتبط با تخریب سلولزی را نیز دارد.</p>
+      </article>
+
+      <article class="panel guide-card">
+        <h2><i class="uil uil-layer-group"></i> وضعیت سلولز و عایق</h2>
+        <p>سامانه نسبت‌های CO/CO2 و CO2/CO را نیز به‌صورت مستقل بررسی می‌کند تا درباره وضعیت سلولز و فرآیندهای تخریب عایقی، جمع‌بندی مکملی ارائه شود.</p>
       </article>
 
       <article class="panel guide-card">
         <h2><i class="uil uil-database"></i> حساب کاربری و سوابق</h2>
-        <p>هر کاربر با شماره موبایل، نام، نام خانوادگی و شرکت خود حساب می‌سازد. از آن به بعد، هر تحلیل جدید به سوابق همان حساب اضافه می‌شود و در صفحه سوابق قابل مشاهده است.</p>
+        <p>برای هر کاربر، حساب کاربری بر اساس شماره تلفن همراه، نام، نام خانوادگی و نام شرکت ایجاد می‌شود. در ساختار فعلی، مدیریت ترانسفورماتورها به‌صورت مستقل انجام می‌شود تا برای هر تجهیز، سوابق تحلیلی مجزا نگهداری شود.</p>
       </article>
 
       <article class="panel guide-card">
         <h2><i class="uil uil-book-open"></i> پشتوانه علمی</h2>
-        <p>متن‌ها و توضیح‌های آموزشی اپ بر پایه پایان‌نامه «ارائه روشی برای آنالیز گازهای محلول در روغن و صحت‌سنجی آن به منظور عیب‌یابی ترانسفورماتورهای قدرت» بومی‌سازی شده‌اند.</p>
+        <div class="science-source">
+          <p>متون و توضیحات آموزشی سامانه بر پایه پایان‌نامه «ارائه روشی برای آنالیز گازهای محلول در روغن و صحت‌سنجی آن به منظور عیب‌یابی ترانسفورماتورهای قدرت» تدوین و بومی‌سازی شده‌اند.</p>
+          <ul class="science-source-list">
+            <li>این بخش با اتکا به منابع پژوهشی مرتبط، از جمله آثار مهندس عباس دامن‌افشان و همکاران، با هدف استفاده آموزشی و تصمیم‌یار تدوین شده است.</li>
+            <li>برای مطالعه منبع، مقاله از طریق پیوند زیر در دسترس است.</li>
+          </ul>
+          <a class="button-link science-source-button" href="https://civilica.com/doc/1238035/" target="_blank" rel="noopener noreferrer">
+            <i class="uil uil-link-alt"></i>
+            <span>مشاهده مقاله در Civilica</span>
+          </a>
+        </div>
       </article>
 
     </section>
@@ -54,12 +71,16 @@
       <i class="uil uil-estate"></i>
       <span>خانه</span>
     </a>
+    <a href="projects.html" class="bottom-nav-item">
+      <i class="uil uil-briefcase-alt"></i>
+      <span>ترانسفورماتورها</span>
+    </a>
     <a href="guide.html" class="bottom-nav-item is-active" aria-current="page">
       <i class="uil uil-book-open"></i>
       <span>راهنما</span>
     </a>
-    <a href="history.html" class="bottom-nav-item">
-      <i class="uil uil-user"></i>
+    <a href="profile.html" class="bottom-nav-item">
+      <i class="uil uil-user-circle"></i>
       <span>پروفایل</span>
     </a>
   </nav>
