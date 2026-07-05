@@ -221,6 +221,34 @@
     window.location.href = getAppRelativePath(target);
   }
 
+  async function applyVerifiedSession(session) {
+    const client = createClient();
+    if (!client || !session) {
+      state.session = null;
+      state.user = null;
+      state.profile = null;
+      state.usage = null;
+      return false;
+    }
+
+    const { data, error } = await client.auth.getUser();
+    if (error || !data?.user) {
+      await client.auth.signOut().catch(() => {});
+      state.session = null;
+      state.user = null;
+      state.profile = null;
+      state.usage = null;
+      return false;
+    }
+
+    state.session = session;
+    state.user = data.user;
+    state.profile = null;
+    state.usage = null;
+    await loadProfile();
+    return true;
+  }
+
   async function loadProfile() {
     const client = createClient();
     if (!client || !state.user) return null;
@@ -855,16 +883,10 @@
       state.initialized = true;
       return;
     }
-    state.session = data.session || null;
-    state.user = data.session?.user || null;
-    if (state.user) await loadProfile();
+    await applyVerifiedSession(data.session || null);
 
     client.auth.onAuthStateChange(async (_event, session) => {
-      state.session = session || null;
-      state.user = session?.user || null;
-      state.profile = null;
-      state.usage = null;
-      if (state.user) await loadProfile();
+      await applyVerifiedSession(session || null);
       syncAuthUI();
       if (!state.user && isProtectedPage()) redirectToAuth();
     });
