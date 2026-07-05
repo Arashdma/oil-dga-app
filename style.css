@@ -165,16 +165,24 @@ select {
 }
 
 .header-share-button {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: auto;
   min-height: 38px;
   padding: 0 12px;
-  border-color: var(--line);
+  border: 0;
+  outline: none;
   background: rgba(255, 255, 255, 0.92);
   color: var(--primary-end);
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
-  box-shadow: 0 6px 16px rgba(81, 55, 20, 0.08);
+  box-shadow: none;
+  cursor: pointer;
 }
 
 .header-share-button i {
@@ -1390,6 +1398,9 @@ button.primary:active,
 
 .share-sheet .confirm-modal-button {
   width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  font-size: 13px;
 }
 
 .share-sheet [hidden] {
@@ -1520,6 +1531,10 @@ button.primary:active,
   box-shadow: 0 20px 48px rgba(81, 55, 20, 0.12);
 }
 
+.results-export-lead {
+  margin-bottom: 34px;
+}
+
 .results-export-header {
   display: grid;
   gap: 8px;
@@ -1555,8 +1570,65 @@ button.primary:active,
   padding: 24px;
 }
 
-.results-export-content .results-stack {
+.results-stack.results-export-content {
+  gap: 28px;
+  padding-top: 0;
+}
+
+.export-gases-card {
+  display: grid;
   gap: 18px;
+  border: 1px solid var(--line);
+  box-shadow: none;
+  background:
+    radial-gradient(circle at top right, rgba(245, 166, 35, 0.1), transparent 34%),
+    linear-gradient(180deg, #fffdf9 0%, #fff7ed 100%);
+}
+
+.export-gases-heading {
+  margin-bottom: 0;
+}
+
+.export-gases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid rgba(231, 215, 197, 0.9);
+  border-right: 1px solid rgba(231, 215, 197, 0.9);
+}
+
+.export-gas-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 16px 18px;
+  border-left: 1px solid rgba(231, 215, 197, 0.9);
+  border-bottom: 1px solid rgba(231, 215, 197, 0.9);
+  border-radius: 0;
+  background: transparent;
+}
+
+.export-gas-name {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.export-gas-value {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.export-gas-unit {
+  color: var(--muted-soft);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  justify-self: end;
 }
 
 .results-export-content .method-info-button,

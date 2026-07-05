@@ -669,8 +669,7 @@ function buildShareFileName(result = currentAnalysisResult) {
 }
 
 function canShareFiles() {
-  if (!navigator.share || !window.File) return false;
-  if (typeof navigator.canShare !== "function") return true;
+  if (!navigator.share || !window.File || typeof navigator.canShare !== "function") return false;
   try {
     return navigator.canShare({ files: [new File(["test"], "test.png", { type: "image/png" })] });
   } catch {
@@ -688,7 +687,7 @@ function ensureHtml2CanvasReady() {
   return Promise.reject(new Error("کتابخانه تولید تصویر بارگذاری نشد."));
 }
 
-function setShareTriggerBusy(isBusy, label = "Share / اشتراک‌گذاری") {
+function setShareTriggerBusy(isBusy, label = "اشتراک گذاری") {
   const button = $("shareAnalysisButton");
   if (!button) return;
   button.disabled = Boolean(isBusy);
@@ -705,11 +704,32 @@ function setShareSheetActionsBusy(isBusy) {
   });
 }
 
-function buildResultsExportNode(result) {
-  const exportShell = document.createElement("section");
-  exportShell.className = "results-export-shell";
-  exportShell.setAttribute("dir", "rtl");
-  exportShell.lang = "fa";
+function buildExportGasesCardHtml(result) {
+  const gasesHtml = fields.map(key => `
+    <div class="export-gas-item">
+      <span class="export-gas-name">${escapeHtml(key)}</span>
+      <strong class="export-gas-value">${escapeHtml(formatNumber(result?.input?.[key] ?? 0))}</strong>
+      <span class="export-gas-unit">ppm</span>
+    </div>
+  `).join("");
+
+  return `
+    <section class="panel export-gases-card">
+      <div class="section-heading export-gases-heading">
+        <h2>گازهای ورودی</h2>
+        <span>مقادیر ثبت‌شده نمونه</span>
+      </div>
+      <div class="export-gases-grid">${gasesHtml}</div>
+    </section>
+  `;
+}
+
+async function captureResultsImage() {
+  const html2canvas = await ensureHtml2CanvasReady();
+  const result = currentAnalysisResult;
+  if (!result) throw new Error("نتیجه‌ای برای اشتراک‌گذاری پیدا نشد.");
+  const sourceNode = document.querySelector(".results-page");
+  if (!sourceNode) throw new Error("بخش نتیجه برای تهیه تصویر پیدا نشد.");
 
   const projectMeta = [
     result?.projectName ? `ترانسفورماتور: ${result.projectName}` : "",
@@ -717,84 +737,137 @@ function buildResultsExportNode(result) {
     `تهیه‌شده در ${formatDateTime(new Date().toISOString())}`
   ].filter(Boolean).join(" | ");
 
-  exportShell.innerHTML = `
-    <section class="results-export-card">
-      <header class="results-export-header">
-        <span class="results-export-kicker">ATN | Oil Gas Analyzer</span>
-        <h2>گزارش تحلیل روغن ترانسفورماتور</h2>
-        <p>${escapeHtml(projectMeta)}</p>
-      </header>
-      <div class="results-export-content">
-        <div class="results-stack"></div>
-      </div>
-    </section>
-  `;
+  if (document.fonts?.ready) await document.fonts.ready;
+  await new Promise(resolve => window.requestAnimationFrame(resolve));
 
-  const exportStack = exportShell.querySelector(".results-stack");
-  const summary = $("summary");
-  const methodsPanel = document.querySelector(".methods-panel");
-  const cellulose = $("celluloseStatus");
+  const canvas = await html2canvas(sourceNode, {
+    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--page-bg").trim() || "#f5f0e8",
+    scale: Math.max(2, Math.min(window.devicePixelRatio || 1, 3)),
+    useCORS: true,
+    logging: false,
+    width: 760,
+    height: sourceNode.scrollHeight,
+    windowWidth: 760,
+    windowHeight: sourceNode.scrollHeight,
+    onclone: clonedDocument => {
+      const clonedPage = clonedDocument.querySelector(".results-page");
+      if (!clonedPage) return;
 
-  [summary, methodsPanel, cellulose].forEach(section => {
-    if (!section) return;
-    const clone = section.cloneNode(true);
-    clone.querySelectorAll(".method-info-button, [data-export-ignore='true']").forEach(node => node.remove());
-    exportStack.appendChild(clone);
+      clonedDocument.body.style.margin = "0";
+      clonedDocument.body.style.background = "var(--page-bg)";
+
+      clonedPage.classList.remove("has-bottom-nav");
+      clonedPage.style.width = "760px";
+      clonedPage.style.maxWidth = "760px";
+      clonedPage.style.minHeight = "auto";
+      clonedPage.style.padding = "28px 28px 28px";
+      clonedPage.style.background = "var(--bg)";
+
+      clonedDocument.querySelector(".app-header")?.remove();
+      clonedDocument.querySelector(".bottom-cta")?.remove();
+      clonedDocument.querySelectorAll(".sheet-shell, .method-info-button, [data-export-ignore='true']").forEach(node => node.remove());
+
+      const exportHeader = clonedDocument.createElement("section");
+      exportHeader.className = "results-export-card results-export-lead";
+      exportHeader.innerHTML = `
+        <header class="results-export-header">
+          <span class="results-export-kicker">ATN | Oil Gas Analyzer</span>
+          <h2>گزارش تحلیل روغن ترانسفورماتور</h2>
+          <p>${escapeHtml(projectMeta)}</p>
+        </header>
+      `;
+
+      const resultsStack = clonedPage.querySelector(".results-stack");
+      if (resultsStack) {
+        resultsStack.classList.add("results-export-content");
+        clonedPage.insertBefore(exportHeader, resultsStack);
+        const exportCard = clonedDocument.createElement("section");
+        exportCard.className = "results-export-card";
+        resultsStack.parentNode.insertBefore(exportCard, resultsStack);
+        resultsStack.insertAdjacentHTML("afterbegin", buildExportGasesCardHtml(result));
+        exportCard.appendChild(resultsStack);
+      }
+    }
   });
 
-  return exportShell;
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(nextBlob => {
+      if (!nextBlob) {
+        reject(new Error("تبدیل تصویر نهایی انجام نشد."));
+        return;
+      }
+      resolve(nextBlob);
+    }, "image/png");
+  });
+
+  return {
+    blob,
+    filename: buildShareFileName(result)
+  };
 }
 
-async function captureResultsImage() {
-  const html2canvas = await ensureHtml2CanvasReady();
-  const result = currentAnalysisResult;
-  if (!result) throw new Error("نتیجه‌ای برای اشتراک‌گذاری پیدا نشد.");
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("آماده‌سازی فایل تصویر انجام نشد."));
+    reader.readAsDataURL(blob);
+  });
+}
 
-  const exportNode = buildResultsExportNode(result);
-  document.body.appendChild(exportNode);
-
-  try {
-    if (document.fonts?.ready) await document.fonts.ready;
-    await new Promise(resolve => window.requestAnimationFrame(resolve));
-    const canvas = await html2canvas(exportNode, {
-      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--page-bg").trim() || "#f5f0e8",
-      scale: Math.max(2, Math.min(window.devicePixelRatio || 1, 3)),
-      useCORS: true,
-      logging: false,
-      width: exportNode.scrollWidth,
-      height: exportNode.scrollHeight,
-      windowWidth: exportNode.scrollWidth,
-      windowHeight: exportNode.scrollHeight
+async function downloadCapturedImage(blob, filename) {
+  if (window.showSaveFilePicker) {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: filename,
+      types: [{
+        description: "PNG Image",
+        accept: { "image/png": [".png"] }
+      }]
     });
-
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(nextBlob => {
-        if (!nextBlob) {
-          reject(new Error("تبدیل تصویر نهایی انجام نشد."));
-          return;
-        }
-        resolve(nextBlob);
-      }, "image/png");
-    });
-
-    return {
-      blob,
-      filename: buildShareFileName(result)
-    };
-  } finally {
-    exportNode.remove();
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return "saved";
   }
-}
 
-function downloadCapturedImage(blob, filename) {
-  const blobUrl = URL.createObjectURL(blob);
+  const dataUrl = await blobToDataUrl(blob);
   const link = document.createElement("a");
-  link.href = blobUrl;
+  link.href = dataUrl;
   link.download = filename;
+  link.rel = "noopener";
+  link.style.display = "none";
   document.body.appendChild(link);
   link.click();
   link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+  if (window.location.protocol === "file:") {
+    const previewWindow = window.open("", "_blank", "noopener");
+    if (previewWindow) {
+      previewWindow.document.write(`
+        <!doctype html>
+        <html lang="fa" dir="rtl">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>تصویر تحلیل</title>
+          <style>
+            body { margin: 0; padding: 24px; background: #f5f0e8; font-family: Vazirmatn, Tahoma, sans-serif; }
+            img { display: block; max-width: min(100%, 860px); margin: 0 auto; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,.12); }
+            p { max-width: 860px; margin: 0 auto 16px; color: #6b6257; font-size: 14px; line-height: 1.9; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <p>اگر دانلود خودکار انجام نشد، روی تصویر نگه دارید یا از گزینه‌های مرورگر برای ذخیره استفاده کنید.</p>
+          <img src="${dataUrl}" alt="تصویر تحلیل روغن ترانسفورماتور" />
+        </body>
+        </html>
+      `);
+      previewWindow.document.close();
+      return "preview";
+    }
+  }
+
+  return "downloaded";
 }
 
 function setupShareSheet() {
@@ -812,10 +885,22 @@ function setupShareSheet() {
 
   shareSheetState.backdrop?.addEventListener("click", closeShareSheet);
   shareSheetState.closeButton?.addEventListener("click", closeShareSheet);
-  shareSheetState.downloadButton?.addEventListener("click", () => {
+  shareSheetState.downloadButton?.addEventListener("click", async () => {
     if (!shareSheetState?.blob) return;
-    downloadCapturedImage(shareSheetState.blob, shareSheetState.filename);
-    renderSaveStatus("تصویر تحلیل روی دستگاه شما دانلود شد.", "success");
+    try {
+      setShareSheetActionsBusy(true);
+      const status = await downloadCapturedImage(shareSheetState.blob, shareSheetState.filename);
+      if (status === "preview") {
+        renderSaveStatus("دانلود مستقیم در این مرورگر محدود است. تصویر در یک صفحه جدید باز شد تا ذخیره‌اش کنید.", "warning");
+        return;
+      }
+      renderSaveStatus("تصویر تحلیل روی دستگاه شما ذخیره شد.", "success");
+    } catch (error) {
+      if (isShareCancelError(error)) return;
+      renderSaveStatus(error?.message || "ذخیره تصویر انجام نشد. لطفاً دوباره تلاش نمایید.", "danger");
+    } finally {
+      setShareSheetActionsBusy(false);
+    }
   });
   shareSheetState.nativeButton?.addEventListener("click", async () => {
     if (!shareSheetState?.blob) return;
@@ -868,7 +953,7 @@ async function handlePrepareShareImage() {
   if (!isResultsPage) return;
   if (infoSheetState?.activeMethod) closeInfoSheet();
   closeShareSheet();
-  setShareTriggerBusy(true, "در حال آماده‌سازی...");
+  setShareTriggerBusy(true, "در حال آماده سازی...");
   setShareSheetActionsBusy(true);
 
   try {
