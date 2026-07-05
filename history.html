@@ -59,6 +59,10 @@
             <strong class="project-detail-value" data-detail-transformer>نامشخص</strong>
           </div>
           <div class="project-detail-row">
+            <span class="project-detail-label">شماره سریال</span>
+            <strong class="project-detail-value" data-detail-transformer-serial>نامشخص</strong>
+          </div>
+          <div class="project-detail-row">
             <span class="project-detail-label">ولتاژ</span>
             <strong class="project-detail-value" data-detail-voltage>نامشخص</strong>
           </div>
@@ -169,6 +173,10 @@
             <span>شماره ترانسفورماتور</span>
             <span class="input-wrap"><input name="transformerNumber" type="text" placeholder="مثلاً TR-201" required /></span>
           </label>
+          <label class="field field-wide">
+            <span>شماره سریال ترانسفورماتور</span>
+            <span class="input-wrap"><input name="transformerSerialNumber" type="text" placeholder="مثلاً SN-45821" /></span>
+          </label>
           <label class="field">
             <span>سطح ولتاژ (کیلوولت)</span>
             <span class="input-wrap"><input name="voltageKv" type="text" inputmode="decimal" placeholder="مثلاً 230" /></span>
@@ -193,7 +201,7 @@
           </label>
         </div>
         <div class="confirm-modal-actions">
-          <button id="projectSubmit" class="button-link confirm-modal-button" type="submit">ذخیره تغییرات</button>
+          <button id="projectSubmit" class="button-link call-button confirm-modal-button" type="submit">ثبت</button>
           <button id="projectCancel" class="compact-link confirm-modal-button" type="button">انصراف</button>
         </div>
       </form>

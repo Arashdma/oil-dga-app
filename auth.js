@@ -249,6 +249,24 @@
     document.body.classList.toggle("is-authenticated", isAuthed);
   }
 
+  function syncBottomNavState() {
+    const navItems = document.querySelectorAll(".bottom-nav .bottom-nav-item");
+    if (!navItems.length) return;
+    const activeHref = (
+      pageName === "projects.html" || pageName === "history.html" ? "projects.html"
+        : pageName === "guide.html" ? "guide.html"
+          : pageName === "profile.html" ? "profile.html"
+            : "index.html"
+    );
+
+    navItems.forEach(item => {
+      const isActive = item.getAttribute("href") === activeHref;
+      item.classList.toggle("is-active", isActive);
+      if (isActive) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
+  }
+
   function isAdminProfile(profile = state.profile) {
     return ADMIN_MOBILES.has(normalizePhone(profile?.mobile || ""));
   }
@@ -272,12 +290,15 @@
     }
     return {
       data: usage || null,
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
   function mapAuthError(error) {
     const message = String(error?.message || error || "خطای ناشناخته");
+    if (message.includes("JWT expired") || message.includes("refresh_token_not_found") || message.includes("Invalid Refresh Token")) {
+      return "نشست کاربری شما منقضی شده است. لطفاً دوباره وارد شوید.";
+    }
     if (message.includes("ADMIN_ONLY")) return "این عملیات فقط برای مدیر سامانه مجاز است.";
     if (message.includes("INVALID_FREE_LIMIT")) return "مقدار محدودیت نسخه رایگان معتبر نیست.";
     if (message.includes("USER_NOT_FOUND")) return "کاربر مورد نظر پیدا نشد.";
@@ -290,6 +311,29 @@
     if (message.includes("Password should be at least")) return "رمز عبور باید بین ۸ تا ۳۰ کاراکتر و فقط شامل حروف و اعداد انگلیسی باشد.";
     if (message.includes("duplicate key value")) return "این شماره تلفن همراه قبلاً ثبت شده است.";
     return message;
+  }
+
+  function isExpiredSessionError(error) {
+    const message = String(error?.message || error || "");
+    return message.includes("JWT expired")
+      || message.includes("refresh_token_not_found")
+      || message.includes("Invalid Refresh Token");
+  }
+
+  function handleAuthError(error) {
+    const mapped = mapAuthError(error);
+    if (isExpiredSessionError(error)) {
+      state.session = null;
+      state.user = null;
+      state.profile = null;
+      state.usage = null;
+      syncAuthUI();
+      if (pageName !== authPage) {
+        showToast(mapped, "warning");
+        redirectToAuth();
+      }
+    }
+    return mapped;
   }
 
   function parseOptionalNumber(value) {
@@ -350,7 +394,7 @@
       last_name: payload.lastName.trim(),
       company_name: payload.companyName.trim()
     });
-    if (error) return { error: mapAuthError(error) };
+    if (error) return { error: handleAuthError(error) };
     await loadProfile();
     syncAuthUI();
     return { error: null };
@@ -368,7 +412,7 @@
       email: phoneToEmail(normalizedPhone),
       password: sanitizedPassword
     });
-    if (error) return { error: mapAuthError(error) };
+    if (error) return { error: handleAuthError(error) };
     state.session = data.session || null;
     state.user = data.user || null;
     await loadProfile();
@@ -404,7 +448,7 @@
       }
     });
 
-    if (error) return { error: mapAuthError(error) };
+    if (error) return { error: handleAuthError(error) };
 
     if (!data.user?.id) {
       return { error: "فرآیند ثبت‌نام تکمیل نشد. تنظیمات احراز هویت را بررسی نمایید." };
@@ -431,8 +475,16 @@
 
   async function signOut() {
     const client = createClient();
-    if (!client) return;
-    await client.auth.signOut();
+    if (!client) {
+      state.session = null;
+      state.user = null;
+      state.profile = null;
+      state.usage = null;
+      syncAuthUI();
+      redirectToAuth();
+      return;
+    }
+    await client.auth.signOut().catch(() => {});
     state.session = null;
     state.user = null;
     state.profile = null;
@@ -447,7 +499,7 @@
     const { data, error } = await client.rpc("get_admin_user_activity");
     return {
       data: Array.isArray(data) ? data : [],
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -458,7 +510,7 @@
     const settings = Array.isArray(data) ? data[0] : data;
     return {
       data: settings || null,
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -475,7 +527,7 @@
     const settings = Array.isArray(data) ? data[0] : data;
     return {
       data: settings || null,
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -489,7 +541,7 @@
     const result = Array.isArray(data) ? data[0] : data;
     return {
       data: result || null,
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -519,7 +571,7 @@
       p_notes: payload.notes
     });
     const response = Array.isArray(data) ? data[0] : data;
-    if (error) return { error: mapAuthError(error), data: response || null };
+    if (error) return { error: handleAuthError(error), data: response || null };
 
     if (response) {
       state.usage = response;
@@ -570,7 +622,7 @@
     const { data, error } = await query.order("sampled_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false });
     return {
       data: data || [],
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -584,7 +636,7 @@
       .eq("user_id", state.user.id)
       .is("hidden_from_user_at", null);
 
-    return { error: error ? mapAuthError(error) : null };
+    return { error: error ? handleAuthError(error) : null };
   }
 
   async function listProjects() {
@@ -598,7 +650,7 @@
       .order("created_at", { ascending: false });
     return {
       data: data || [],
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -614,7 +666,7 @@
       .maybeSingle();
     return {
       data: data || null,
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -633,7 +685,7 @@
       .single();
     return {
       data: data || null,
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -656,7 +708,7 @@
       .single();
     return {
       data: data || null,
-      error: error ? mapAuthError(error) : null
+      error: error ? handleAuthError(error) : null
     };
   }
 
@@ -678,7 +730,7 @@
       .maybeSingle();
     return {
       data: data || null,
-      error: error ? mapAuthError(error) : (!data ? "ترانسفورماتور مورد نظر پیدا نشد یا قبلاً حذف شده است." : null)
+      error: error ? handleAuthError(error) : (!data ? "ترانسفورماتور مورد نظر پیدا نشد یا قبلاً حذف شده است." : null)
     };
   }
 
@@ -783,7 +835,26 @@
     }
 
     const client = createClient();
-    const { data } = await client.auth.getSession();
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      const authMessage = mapAuthError(error);
+      state.session = null;
+      state.user = null;
+      state.profile = null;
+      state.usage = null;
+      syncAuthUI();
+      if (isProtectedPage()) {
+        showToast(authMessage, "warning");
+        redirectToAuth();
+        return;
+      }
+      if (pageName === authPage) {
+        bindAuthForms();
+        showToast(authMessage, "warning");
+      }
+      state.initialized = true;
+      return;
+    }
     state.session = data.session || null;
     state.user = data.session?.user || null;
     if (state.user) await loadProfile();
@@ -813,6 +884,7 @@
 
     state.initialized = true;
     syncAuthUI();
+    syncBottomNavState();
 
     if (isAdminPath() && !isAdminProfile()) {
       showGlobalMessage("دسترسی به پنل مدیریت فقط برای حساب کاربری مجاز امکان‌پذیر است.", "danger");

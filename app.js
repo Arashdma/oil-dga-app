@@ -35,6 +35,7 @@ let projectFormModalState = null;
 let projectDeleteModalState = null;
 let sampleDateModalState = null;
 let upgradeModalState = null;
+let shareSheetState = null;
 const HISTORY_PAGE_SIZE = 5;
 const historyState = {
   items: [],
@@ -648,6 +649,237 @@ function getStoredInput() {
     return JSON.parse(raw);
   } catch {
     return null;
+  }
+}
+
+function sanitizeFileNamePart(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, "-")
+    .slice(0, 60);
+}
+
+function buildShareFileName(result = currentAnalysisResult) {
+  const project = sanitizeFileNamePart(result?.projectName || "analysis");
+  const date = result?.sampledAt
+    ? new Date(result.sampledAt).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+  return `oil-dga-${project || "analysis"}-${date}.png`;
+}
+
+function canShareFiles() {
+  if (!navigator.share || !window.File) return false;
+  if (typeof navigator.canShare !== "function") return true;
+  try {
+    return navigator.canShare({ files: [new File(["test"], "test.png", { type: "image/png" })] });
+  } catch {
+    return false;
+  }
+}
+
+function isShareCancelError(error) {
+  if (!error) return false;
+  return error.name === "AbortError" || /cancel|aborted/i.test(String(error.message || ""));
+}
+
+function ensureHtml2CanvasReady() {
+  if (typeof window.html2canvas === "function") return Promise.resolve(window.html2canvas);
+  return Promise.reject(new Error("کتابخانه تولید تصویر بارگذاری نشد."));
+}
+
+function setShareTriggerBusy(isBusy, label = "Share / اشتراک‌گذاری") {
+  const button = $("shareAnalysisButton");
+  if (!button) return;
+  button.disabled = Boolean(isBusy);
+  button.setAttribute("aria-busy", isBusy ? "true" : "false");
+  const labelNode = button.querySelector("span");
+  if (labelNode) labelNode.textContent = label;
+}
+
+function setShareSheetActionsBusy(isBusy) {
+  if (!shareSheetState) return;
+  [shareSheetState.nativeButton, shareSheetState.downloadButton, shareSheetState.closeButton].forEach(button => {
+    if (!button) return;
+    button.disabled = Boolean(isBusy);
+  });
+}
+
+function buildResultsExportNode(result) {
+  const exportShell = document.createElement("section");
+  exportShell.className = "results-export-shell";
+  exportShell.setAttribute("dir", "rtl");
+  exportShell.lang = "fa";
+
+  const projectMeta = [
+    result?.projectName ? `ترانسفورماتور: ${result.projectName}` : "",
+    result?.sampledAt ? `نمونه‌گیری: ${formatDateOnly(result.sampledAt)}` : "",
+    `تهیه‌شده در ${formatDateTime(new Date().toISOString())}`
+  ].filter(Boolean).join(" | ");
+
+  exportShell.innerHTML = `
+    <section class="results-export-card">
+      <header class="results-export-header">
+        <span class="results-export-kicker">ATN | Oil Gas Analyzer</span>
+        <h2>گزارش تحلیل روغن ترانسفورماتور</h2>
+        <p>${escapeHtml(projectMeta)}</p>
+      </header>
+      <div class="results-export-content">
+        <div class="results-stack"></div>
+      </div>
+    </section>
+  `;
+
+  const exportStack = exportShell.querySelector(".results-stack");
+  const summary = $("summary");
+  const methodsPanel = document.querySelector(".methods-panel");
+  const cellulose = $("celluloseStatus");
+
+  [summary, methodsPanel, cellulose].forEach(section => {
+    if (!section) return;
+    const clone = section.cloneNode(true);
+    clone.querySelectorAll(".method-info-button, [data-export-ignore='true']").forEach(node => node.remove());
+    exportStack.appendChild(clone);
+  });
+
+  return exportShell;
+}
+
+async function captureResultsImage() {
+  const html2canvas = await ensureHtml2CanvasReady();
+  const result = currentAnalysisResult;
+  if (!result) throw new Error("نتیجه‌ای برای اشتراک‌گذاری پیدا نشد.");
+
+  const exportNode = buildResultsExportNode(result);
+  document.body.appendChild(exportNode);
+
+  try {
+    if (document.fonts?.ready) await document.fonts.ready;
+    await new Promise(resolve => window.requestAnimationFrame(resolve));
+    const canvas = await html2canvas(exportNode, {
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--page-bg").trim() || "#f5f0e8",
+      scale: Math.max(2, Math.min(window.devicePixelRatio || 1, 3)),
+      useCORS: true,
+      logging: false,
+      width: exportNode.scrollWidth,
+      height: exportNode.scrollHeight,
+      windowWidth: exportNode.scrollWidth,
+      windowHeight: exportNode.scrollHeight
+    });
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(nextBlob => {
+        if (!nextBlob) {
+          reject(new Error("تبدیل تصویر نهایی انجام نشد."));
+          return;
+        }
+        resolve(nextBlob);
+      }, "image/png");
+    });
+
+    return {
+      blob,
+      filename: buildShareFileName(result)
+    };
+  } finally {
+    exportNode.remove();
+  }
+}
+
+function downloadCapturedImage(blob, filename) {
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+}
+
+function setupShareSheet() {
+  if (shareSheetState || !$("shareSheet")) return;
+  shareSheetState = {
+    shell: $("shareSheet"),
+    backdrop: $("shareSheetBackdrop"),
+    nativeButton: $("shareNativeButton"),
+    downloadButton: $("shareDownloadButton"),
+    closeButton: $("shareSheetClose"),
+    text: $("shareSheetText"),
+    blob: null,
+    filename: ""
+  };
+
+  shareSheetState.backdrop?.addEventListener("click", closeShareSheet);
+  shareSheetState.closeButton?.addEventListener("click", closeShareSheet);
+  shareSheetState.downloadButton?.addEventListener("click", () => {
+    if (!shareSheetState?.blob) return;
+    downloadCapturedImage(shareSheetState.blob, shareSheetState.filename);
+    renderSaveStatus("تصویر تحلیل روی دستگاه شما دانلود شد.", "success");
+  });
+  shareSheetState.nativeButton?.addEventListener("click", async () => {
+    if (!shareSheetState?.blob) return;
+    if (!canShareFiles()) {
+      renderSaveStatus("اشتراک‌گذاری مستقیم در این مرورگر پشتیبانی نمی‌شود. می‌توانید تصویر را دانلود کنید.", "warning");
+      return;
+    }
+
+    const file = new File([shareSheetState.blob], shareSheetState.filename, { type: "image/png" });
+    try {
+      await navigator.share({
+        files: [file],
+        title: "نتیجه تحلیل روغن ترانسفورماتور",
+        text: "تصویر نتیجه تحلیل روغن ترانسفورماتور"
+      });
+      closeShareSheet();
+    } catch (error) {
+      if (isShareCancelError(error)) return;
+      renderSaveStatus("اشتراک‌گذاری انجام نشد. لطفاً دوباره تلاش نمایید.", "danger");
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && shareSheetState && !shareSheetState.shell.hidden) {
+      closeShareSheet();
+    }
+  });
+}
+
+function openShareSheet(payload) {
+  setupShareSheet();
+  if (!shareSheetState) return;
+  shareSheetState.blob = payload.blob;
+  shareSheetState.filename = payload.filename;
+  shareSheetState.nativeButton.hidden = !canShareFiles();
+  if (shareSheetState.text) {
+    shareSheetState.text.textContent = canShareFiles()
+      ? "می‌توانید تصویر این تحلیل را روی دستگاه ذخیره کنید یا مستقیم با برنامه‌های دیگر به اشتراک بگذارید."
+      : "این مرورگر اشتراک‌گذاری مستقیم فایل را پشتیبانی نمی‌کند. تصویر را دانلود کنید و در برنامه دلخواه خود ارسال نمایید.";
+  }
+  openAnimatedModal(shareSheetState.shell);
+}
+
+function closeShareSheet() {
+  if (!shareSheetState) return;
+  closeAnimatedModal(shareSheetState.shell);
+}
+
+async function handlePrepareShareImage() {
+  if (!isResultsPage) return;
+  if (infoSheetState?.activeMethod) closeInfoSheet();
+  closeShareSheet();
+  setShareTriggerBusy(true, "در حال آماده‌سازی...");
+  setShareSheetActionsBusy(true);
+
+  try {
+    const payload = await captureResultsImage();
+    openShareSheet(payload);
+  } catch (error) {
+    console.error(error);
+    renderSaveStatus(error?.message || "تهیه تصویر تحلیل انجام نشد. لطفاً دوباره تلاش نمایید.", "danger");
+  } finally {
+    setShareSheetActionsBusy(false);
+    setShareTriggerBusy(false);
   }
 }
 
@@ -1273,7 +1505,9 @@ function initResultsPage() {
   renderStoredAnalysis();
   setupInfoSheet();
   setupUpgradeModal();
+  setupShareSheet();
   savePendingAnalysisIfNeeded();
+  $("shareAnalysisButton")?.addEventListener("click", handlePrepareShareImage);
   document.querySelector("[data-back]")?.addEventListener("click", () => {
     if (window.history.length > 1) {
       window.history.back();
@@ -1722,6 +1956,7 @@ function renderProjectDetails(project) {
   set("[data-detail-company]", project.company_name || "نامشخص");
   set("[data-detail-station]", project.station_name || "نامشخص");
   set("[data-detail-transformer]", project.transformer_number || "نامشخص");
+  set("[data-detail-transformer-serial]", extractProjectSerialNumber(project) || "نامشخص");
   set("[data-detail-voltage]", project.voltage_kv !== null && project.voltage_kv !== undefined ? `${formatMixedLabel(project.voltage_kv)} کیلوولت` : "نامشخص");
   set("[data-detail-capacity]", project.capacity_mva !== null && project.capacity_mva !== undefined ? `${formatMixedLabel(project.capacity_mva)} مگاولت‌آمپر` : "نامشخص");
   set("[data-detail-manufacturer]", project.manufacturer || "نامشخص");
@@ -1768,7 +2003,7 @@ function resetProjectForm() {
   projectFormModalState.title.textContent = "افزودن ترانسفورماتور جدید";
   projectFormModalState.text.textContent = "در این بخش، مشخصات پایه ترانسفورماتور ثبت می‌شود تا ساختار سوابق تحلیلی آن ایجاد گردد.";
   projectFormModalState.submit.disabled = false;
-  projectFormModalState.submit.textContent = "ثبت ترانسفورماتور";
+  projectFormModalState.submit.textContent = "ثبت";
 }
 
 function fillProjectForm(project) {
@@ -1802,7 +2037,7 @@ function openProjectFormModal(project = null) {
     projectFormModalState.activeId = Number(project.id);
     projectFormModalState.title.textContent = "ویرایش ترانسفورماتور";
     projectFormModalState.text.textContent = "در این بخش می‌توانید مشخصات ثبت‌شده ترانسفورماتور را بروزرسانی نمایید.";
-    projectFormModalState.submit.textContent = "ذخیره تغییرات";
+    projectFormModalState.submit.textContent = "ثبت";
     fillProjectForm(project);
   }
   openAnimatedModal(projectFormModalState.shell);
@@ -1868,7 +2103,7 @@ function setupProjectFormModal() {
 
     if (error) {
       projectFormModalState.submit.disabled = false;
-      projectFormModalState.submit.textContent = isEdit ? "ذخیره تغییرات" : "ثبت ترانسفورماتور";
+      projectFormModalState.submit.textContent = "ثبت";
       window.AppAuth?.showToast(error, "danger");
       return;
     }

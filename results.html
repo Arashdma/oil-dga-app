@@ -21,7 +21,12 @@
 <body class="results-body">
   <main class="page results-page has-bottom-nav">
     <header class="app-header app-header-results">
-      <span class="header-spacer" aria-hidden="true"></span>
+      <div class="header-actions">
+        <button id="shareAnalysisButton" class="compact-link header-share-button" type="button" aria-label="اشتراک‌گذاری نتیجه تحلیل">
+          <i class="uil uil-share-alt"></i>
+          <span>Share / اشتراک‌گذاری</span>
+        </button>
+      </div>
       <h1>نتیجه تحلیل</h1>
       <button class="icon-button back-button" type="button" data-back aria-label="بازگشت به صفحه قبل">
         <span>‹</span>
@@ -72,10 +77,27 @@
     </section>
   </div>
 
+  <div id="shareSheet" class="sheet-shell" aria-hidden="true" hidden>
+    <button id="shareSheetBackdrop" class="sheet-backdrop" type="button" aria-label="بستن"></button>
+    <section class="info-sheet confirm-sheet share-sheet" role="dialog" aria-modal="true" aria-labelledby="shareSheetTitle">
+      <div class="sheet-handle-wrap" aria-hidden="true">
+        <span class="sheet-handle"></span>
+      </div>
+      <h2 id="shareSheetTitle" class="confirm-modal-title">تصویر تحلیل آماده است</h2>
+      <p id="shareSheetText" class="confirm-modal-text">می‌توانید تصویر این تحلیل را روی دستگاه ذخیره کنید یا با برنامه‌های دیگر به اشتراک بگذارید.</p>
+      <div class="confirm-modal-actions share-sheet-actions">
+        <button id="shareNativeButton" class="button-link call-button confirm-modal-button" type="button">اشتراک‌گذاری</button>
+        <button id="shareDownloadButton" class="button-link secondary confirm-modal-button" type="button">دانلود تصویر</button>
+        <button id="shareSheetClose" class="compact-link confirm-modal-button" type="button">بستن</button>
+      </div>
+    </section>
+  </div>
+
   <script src="diagnosisEngine.js"></script>
   <script src="faultDefinitions.js"></script>
   <script src="supabase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
