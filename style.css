@@ -1225,6 +1225,7 @@ button.primary:active,
   z-index: 50;
   opacity: 0;
   pointer-events: none;
+  overflow-y: auto;
   transition: opacity 220ms ease;
 }
 
@@ -1255,7 +1256,7 @@ button.primary:active,
   right: 50%;
   bottom: 0;
   width: min(100%, 500px);
-  max-height: min(78vh, 760px);
+  max-height: min(86dvh, 760px);
   overflow: hidden;
   border-radius: 24px 24px 0 0;
   background: var(--surface);
@@ -1287,7 +1288,11 @@ button.primary:active,
   right: 50%;
   bottom: 0;
   width: min(100%, 500px);
+  max-height: min(86dvh, 760px);
   padding: 0 var(--space-md) max(24px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   border-radius: 24px 24px 0 0;
   background: var(--surface);
   box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.14);
@@ -2223,7 +2228,7 @@ button.compact-link {
 .project-form {
   display: grid;
   gap: 18px;
-  margin-top: 18px;
+  margin-top: 8px;
 }
 
 .project-form-sheet .confirm-modal-actions {
@@ -2367,17 +2372,15 @@ button.compact-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
-  color: #ffffff;
-  box-shadow: 0 14px 30px rgba(232, 98, 10, 0.26);
+  width: 96px;
+  height: 96px;
 }
 
-.projects-empty-icon i {
-  font-size: 34px;
-  line-height: 1;
+.projects-empty-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .projects-empty-kicker {

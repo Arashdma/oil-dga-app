@@ -1620,6 +1620,10 @@ function extractProjectNotes(project) {
   return String(project?.extra_attributes?.notes || "").trim();
 }
 
+function extractProjectSerialNumber(project) {
+  return String(project?.transformer_serial_number || project?.extra_attributes?.serial_number || "").trim();
+}
+
 function buildProjectAnalysisSummaryMap(items) {
   const summaryById = {};
   (items || []).forEach(item => {
@@ -1728,11 +1732,9 @@ function buildProjectsEmptyState() {
   return `
     <section class="panel empty-state projects-empty-state" aria-hidden="false">
       <div class="projects-empty-icon" aria-hidden="true">
-        <i class="uil uil-briefcase-alt"></i>
+        <img src="assets/logo.png" alt="" />
       </div>
-      <span class="projects-empty-kicker">شروع ساختار ترانسفورماتورها</span>
-      <h2>هنوز ترانسفورماتوری ثبت نشده است</h2>
-      <p>برای آغاز ثبت سوابق، نخستین ترانسفورماتور را تعریف نمایید.</p>
+      <h2>مشخصات ترانسفورماتور را ثبت کنید.</h2>
       <button class="button-link" type="button" id="projectEmptyInlineCta">ثبت ترانسفورماتور</button>
     </section>
   `;
@@ -1748,7 +1750,7 @@ function renderProjectsList(items) {
     empty.style.display = "none";
     empty.setAttribute("aria-hidden", "true");
     list.innerHTML = buildProjectsEmptyState();
-    $("projectEmptyInlineCta")?.addEventListener("click", openProjectFormModal);
+    $("projectEmptyInlineCta")?.addEventListener("click", () => openProjectFormModal());
     return;
   }
 
@@ -1774,6 +1776,7 @@ function fillProjectForm(project) {
   projectFormModalState.form.elements.companyName.value = project.company_name || "";
   projectFormModalState.form.elements.stationName.value = project.station_name || "";
   projectFormModalState.form.elements.transformerNumber.value = project.transformer_number || "";
+  projectFormModalState.form.elements.transformerSerialNumber.value = extractProjectSerialNumber(project);
   projectFormModalState.form.elements.voltageKv.value = project.voltage_kv ?? "";
   projectFormModalState.form.elements.capacityMva.value = project.capacity_mva ?? "";
   projectFormModalState.form.elements.manufacturer.value = project.manufacturer || "";
@@ -1787,10 +1790,14 @@ function closeProjectFormModal() {
   closeAnimatedModal(projectFormModalState.shell);
 }
 
+function isProjectFormEditTarget(project) {
+  return !!project && typeof project === "object" && "id" in project;
+}
+
 function openProjectFormModal(project = null) {
   if (!projectFormModalState) return;
   resetProjectForm();
-  if (project) {
+  if (isProjectFormEditTarget(project)) {
     projectFormModalState.mode = "edit";
     projectFormModalState.activeId = Number(project.id);
     projectFormModalState.title.textContent = "ویرایش ترانسفورماتور";
@@ -1817,8 +1824,8 @@ function setupProjectFormModal() {
 
   projectFormModalState.backdrop?.addEventListener("click", closeProjectFormModal);
   projectFormModalState.cancel?.addEventListener("click", closeProjectFormModal);
-  $("projectAddButton")?.addEventListener("click", openProjectFormModal);
-  $("projectEmptyCta")?.addEventListener("click", openProjectFormModal);
+  $("projectAddButton")?.addEventListener("click", () => openProjectFormModal());
+  $("projectEmptyCta")?.addEventListener("click", () => openProjectFormModal());
   $("projectsList")?.addEventListener("click", event => {
     const card = event.target.closest("[data-project-id]");
     if (!card) return;
@@ -1848,6 +1855,7 @@ function setupProjectFormModal() {
       companyName: formData.get("companyName"),
       stationName: formData.get("stationName"),
       transformerNumber: formData.get("transformerNumber"),
+      transformerSerialNumber: formData.get("transformerSerialNumber"),
       voltageKv: formData.get("voltageKv"),
       capacityMva: formData.get("capacityMva"),
       manufacturer: formData.get("manufacturer"),

@@ -311,6 +311,7 @@
     const companyName = String(payload.companyName || "").trim();
     const stationName = String(payload.stationName || "").trim();
     const transformerNumber = String(payload.transformerNumber || "").trim();
+    const transformerSerialNumber = String(payload.transformerSerialNumber || "").trim();
     const manufacturer = String(payload.manufacturer || "").trim();
     const extraNotes = String(payload.extraNotes || "").trim();
 
@@ -329,6 +330,7 @@
         company_name: companyName,
         station_name: stationName,
         transformer_number: transformerNumber,
+        transformer_serial_number: transformerSerialNumber || null,
         voltage_kv: parseOptionalNumber(payload.voltageKv),
         capacity_mva: parseOptionalNumber(payload.capacityMva),
         manufacturer: manufacturer || null,
@@ -590,7 +592,7 @@
     if (!client || !state.user) return { data: [], error: "برای مشاهده ترانسفورماتورها، ابتدا وارد حساب کاربری شوید." };
     const { data, error } = await client
       .from("projects")
-      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .select("id, company_name, station_name, transformer_number, transformer_serial_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
       .is("archived_at", null)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
@@ -605,7 +607,7 @@
     if (!client || !state.user) return { data: null, error: "برای مشاهده جزئیات ترانسفورماتور، ابتدا وارد حساب کاربری شوید." };
     const { data, error } = await client
       .from("projects")
-      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .select("id, company_name, station_name, transformer_number, transformer_serial_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
       .eq("id", Number(projectId))
       .is("archived_at", null)
       .is("deleted_at", null)
@@ -627,7 +629,7 @@
         ...normalized.data,
         updated_at: new Date().toISOString()
       })
-      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .select("id, company_name, station_name, transformer_number, transformer_serial_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
       .single();
     return {
       data: data || null,
@@ -650,7 +652,7 @@
       .eq("user_id", state.user.id)
       .is("archived_at", null)
       .is("deleted_at", null)
-      .select("id, company_name, station_name, transformer_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
+      .select("id, company_name, station_name, transformer_number, transformer_serial_number, voltage_kv, capacity_mva, manufacturer, manufactured_year, extra_attributes, created_at, updated_at")
       .single();
     return {
       data: data || null,

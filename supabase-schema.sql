@@ -15,6 +15,7 @@ create table if not exists public.projects (
   company_name text not null,
   station_name text not null,
   transformer_number text not null,
+  transformer_serial_number text,
   voltage_kv numeric,
   capacity_mva numeric,
   manufacturer text,
@@ -64,6 +65,15 @@ add column if not exists deleted_at timestamptz;
 
 alter table public.projects
 add column if not exists updated_at timestamptz not null default now();
+
+alter table public.projects
+add column if not exists transformer_serial_number text;
+
+update public.projects
+set
+  transformer_serial_number = coalesce(transformer_serial_number, extra_attributes ->> 'serial_number'),
+  extra_attributes = extra_attributes - 'serial_number'
+where coalesce(extra_attributes ->> 'serial_number', '') <> '';
 
 alter table public.profiles
 add column if not exists analysis_count integer not null default 0;
@@ -383,10 +393,10 @@ begin
   )
   returning id into inserted_analysis_id;
 
-  update public.profiles
-  set analysis_count = coalesce(analysis_count, 0) + 1
-  where id = auth.uid()
-  returning analysis_count into next_analysis_count;
+  update public.profiles as p
+  set analysis_count = coalesce(p.analysis_count, 0) + 1
+  where p.id = auth.uid()
+  returning p.analysis_count into next_analysis_count;
 
   return query
   select
